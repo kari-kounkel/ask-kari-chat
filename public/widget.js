@@ -3,6 +3,7 @@
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
   const headers = { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
   const LOGO = "https://chat.karikounkel.com/AskKari.png";
+  const LOGO_WHITE = "https://chat.karikounkel.com/AskKari-white.png";
   const RED = "#e03820";
   const AMBER = "#f07830";
   const GRAD = "linear-gradient(135deg," + RED + "," + AMBER + ")";
@@ -68,7 +69,7 @@
   const panel = document.createElement("div");
   panel.id = "ak-panel";
   panel.innerHTML = "<div id='ak-header'>"
-    + "<img src='" + LOGO + "' alt='Ask Kari' />"
+    + "<img src='" + LOGO_WHITE + "' alt='Ask Kari' />"
     + "<div id='ak-header-text'><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div>"
     + "<button id='ak-close'>×</button></div>"
     + "<div id='ak-intro'>"
