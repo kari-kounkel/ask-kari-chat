@@ -7,12 +7,23 @@ const GRAD = "linear-gradient(135deg," + RED + "," + AMBER + ")";
 const SOFT = "#fdf6f2";
 const BORDER = "#e8cfc0";
 
+const SORTS = [
+  { label: "Newest", fn: (a, b) => new Date(b.updated_at) - new Date(a.updated_at) },
+  { label: "Oldest", fn: (a, b) => new Date(a.updated_at) - new Date(b.updated_at) },
+  { label: "Name A-Z", fn: (a, b) => (a.visitor_name || "").localeCompare(b.visitor_name || "") },
+  { label: "Email A-Z", fn: (a, b) => (a.visitor_email || "").localeCompare(b.visitor_email || "") },
+  { label: "Site", fn: (a, b) => (a.site_origin || "").localeCompare(b.site_origin || "") },
+];
+
 export default function AdminInbox({ agent, onLogout }) {
   const [conversations, setConversations] = useState([]);
   const [active, setActive] = useState(null);
   const [messages, setMessages] = useState([]);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [search, setSearch] = useState("");
+  const [sortIdx, setSortIdx] = useState(0);
+  const [showClosed, setShowClosed] = useState(true);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +66,18 @@ export default function AdminInbox({ agent, onLogout }) {
     if (active?.id === id) setActive(null);
   };
 
+  const reopenConvo = async (id) => {
+    await supabase.from("conversations").update({ status: "open" }).eq("id", id);
+  };
+
+  const deleteConvo = async (id) => {
+    if (!confirm("Delete this conversation and all its messages? This cannot be undone.")) return;
+    await supabase.from("messages").delete().eq("conversation_id", id);
+    await supabase.from("conversations").delete().eq("id", id);
+    if (active?.id === id) setActive(null);
+    setConversations(prev => prev.filter(c => c.id !== id));
+  };
+
   const siteTag = (origin) => {
     if (!origin) return "Unknown";
     try { return new URL(origin).hostname.replace("www.", ""); } catch { return origin; }
@@ -70,9 +93,6 @@ export default function AdminInbox({ agent, onLogout }) {
     return Math.floor(h / 24) + "d ago";
   };
 
-  const open = conversations.filter(c => c.status === "open");
-  const closed = conversations.filter(c => c.status === "closed");
-
   const consentLabel = (c) => {
     if (c.content_consent === null || c.content_consent === undefined) return null;
     if (!c.content_consent) return { text: "No content use", color: "#b09080" };
@@ -80,11 +100,38 @@ export default function AdminInbox({ agent, onLogout }) {
     return { text: "OK to use · anonymous", color: "#7ab87a" };
   };
 
+  const filtered = conversations
+    .filter(c => {
+      const q = search.toLowerCase();
+      return !q || (c.visitor_name || "").toLowerCase().includes(q) || (c.visitor_email || "").toLowerCase().includes(q) || (c.site_origin || "").toLowerCase().includes(q);
+    })
+    .sort(SORTS[sortIdx].fn);
+
+  const open = filtered.filter(c => c.status === "open");
+  const closed = filtered.filter(c => c.status === "closed");
+
+  const ConvoCard = ({ c, dimmed }) => {
+    const consent = consentLabel(c);
+    return (
+      <div onClick={() => setActive(c)} style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff5f0" : "transparent", borderLeft: active?.id === c.id ? "3px solid " + RED : "3px solid transparent", transition: "all 0.15s", opacity: dimmed ? 0.6 : 1 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: dimmed ? "#a07060" : "#2a1a10" }}>{c.visitor_name || "Visitor"}</span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: "#b09080" }}>{timeAgo(c.updated_at)}</span>
+            <span onClick={e => { e.stopPropagation(); deleteConvo(c.id); }} style={{ fontSize: 14, color: "#c0a090", cursor: "pointer", lineHeight: 1, padding: "0 2px" }} title="Delete">×</span>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: AMBER, fontWeight: 600, marginBottom: 2 }}>{siteTag(c.site_origin)}</div>
+        {c.visitor_email && <div style={{ fontSize: 11, color: "#a07060" }}>{c.visitor_email}</div>}
+        {consent && <div style={{ fontSize: 10, color: consent.color, marginTop: 3, fontStyle: "italic" }}>{consent.text}</div>}
+      </div>
+    );
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: SOFT, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
 
-      {/* Header */}
       <div style={{ background: GRAD, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(224,56,32,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="/AskKari-white.png" alt="Ask Kari" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "contain", background: "rgba(255,255,255,0.15)" }} />
@@ -98,74 +145,55 @@ export default function AdminInbox({ agent, onLogout }) {
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden", height: "calc(100vh - 57px)" }}>
 
-        {/* Sidebar */}
-        <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, overflowY: "auto", flexShrink: 0 }}>
-          <div style={{ padding: "16px 16px 8px", fontSize: 11, color: AMBER, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>
-            Open ({open.length})
+        <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, display: "flex", flexDirection: "column", flexShrink: 0 }}>
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, display: "flex", flexDirection: "column", gap: 8 }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search name, email, site..."
+              style={{ width: "100%", padding: "8px 12px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 8, color: "#2a1a10", fontSize: 12, fontFamily: "'DM Sans',sans-serif", outline: "none", boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#b09080", flexShrink: 0 }}>Sort:</span>
+              <select value={sortIdx} onChange={e => setSortIdx(Number(e.target.value))} style={{ flex: 1, padding: "5px 8px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 6, color: "#2a1a10", fontSize: 11, fontFamily: "'DM Sans',sans-serif", outline: "none", cursor: "pointer" }}>
+                {SORTS.map((s, i) => <option key={i} value={i}>{s.label}</option>)}
+              </select>
+              <span onClick={() => setShowClosed(p => !p)} style={{ fontSize: 11, color: showClosed ? AMBER : "#b09080", cursor: "pointer", flexShrink: 0, fontWeight: 600 }}>
+                {showClosed ? "Hide closed" : "Show closed"}
+              </span>
+            </div>
           </div>
-          {open.length === 0 && <div style={{ padding: "12px 16px", fontSize: 13, color: "#b09080" }}>No open conversations</div>}
-          {open.map(c => {
-            const consent = consentLabel(c);
-            return (
-              <div key={c.id} onClick={() => setActive(c)} style={{ padding: "14px 16px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff5f0" : "transparent", borderLeft: active?.id === c.id ? "3px solid " + RED : "3px solid transparent", transition: "all 0.15s" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#2a1a10" }}>{c.visitor_name || "Visitor"}</span>
-                  <span style={{ fontSize: 11, color: "#b09080" }}>{timeAgo(c.updated_at)}</span>
-                </div>
-                <div style={{ fontSize: 11, color: AMBER, marginBottom: 2, fontWeight: 600 }}>{siteTag(c.site_origin)}</div>
-                {c.visitor_email && <div style={{ fontSize: 11, color: "#a07060" }}>{c.visitor_email}</div>}
-                {consent && <div style={{ fontSize: 10, color: consent.color, marginTop: 4, fontStyle: "italic" }}>{consent.text}</div>}
-              </div>
-            );
-          })}
 
-          {closed.length > 0 && (
-            <>
-              <div style={{ padding: "16px 16px 8px", fontSize: 11, color: "#b09080", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginTop: 8 }}>
-                Closed ({closed.length})
-              </div>
-              {closed.map(c => (
-                <div key={c.id} onClick={() => setActive(c)} style={{ padding: "14px 16px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff5f0" : "transparent", opacity: 0.6, borderLeft: active?.id === c.id ? "3px solid #b09080" : "3px solid transparent" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "#a07060" }}>{c.visitor_name || "Visitor"}</span>
-                    <span style={{ fontSize: 11, color: "#b09080" }}>{timeAgo(c.updated_at)}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: "#b09080" }}>{siteTag(c.site_origin)}</div>
-                </div>
-              ))}
-            </>
-          )}
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            <div style={{ padding: "10px 14px 6px", fontSize: 10, color: AMBER, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Open ({open.length})</div>
+            {open.length === 0 && <div style={{ padding: "10px 14px", fontSize: 12, color: "#b09080" }}>No open conversations</div>}
+            {open.map(c => <ConvoCard key={c.id} c={c} dimmed={false} />)}
+            {showClosed && closed.length > 0 && (
+              <>
+                <div style={{ padding: "10px 14px 6px", fontSize: 10, color: "#b09080", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginTop: 8 }}>Closed ({closed.length})</div>
+                {closed.map(c => <ConvoCard key={c.id} c={c} dimmed={true} />)}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Main panel */}
         {!active ? (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#b09080", fontSize: 15 }}>
-            Select a conversation to start
-          </div>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#b09080", fontSize: 15 }}>Select a conversation to start</div>
         ) : (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-            {/* Convo header */}
             <div style={{ padding: "14px 24px", borderBottom: "1.5px solid " + BORDER, background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: 16, fontWeight: 600, color: "#2a1a10" }}>{active.visitor_name || "Visitor"}</div>
-                <div style={{ fontSize: 12, color: "#a07060", marginTop: 2 }}>
-                  {siteTag(active.site_origin)}{active.visitor_email ? " · " + active.visitor_email : ""}
-                </div>
-                {consentLabel(active) && (
-                  <div style={{ fontSize: 11, color: consentLabel(active).color, marginTop: 3, fontStyle: "italic" }}>
-                    {consentLabel(active).text}
-                  </div>
-                )}
+                <div style={{ fontSize: 12, color: "#a07060", marginTop: 2 }}>{siteTag(active.site_origin)}{active.visitor_email ? " · " + active.visitor_email : ""}</div>
+                {consentLabel(active) && <div style={{ fontSize: 11, color: consentLabel(active).color, marginTop: 3, fontStyle: "italic" }}>{consentLabel(active).text}</div>}
               </div>
-              {active.status === "open" && (
-                <button onClick={() => closeConvo(active.id)} style={{ padding: "6px 16px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: "#a07060", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
-                  Close conversation
-                </button>
-              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                {active.status === "open" && <button onClick={() => closeConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: "#a07060", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Close</button>}
+                {active.status === "closed" && <button onClick={() => reopenConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: AMBER, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Reopen</button>}
+                <button onClick={() => deleteConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid #f0c0b0", background: "transparent", color: RED, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Delete</button>
+              </div>
             </div>
 
-            {/* Messages */}
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12, background: SOFT }}>
               {messages.map(m => (
                 <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: m.sender === "agent" ? "flex-end" : "flex-start" }}>
@@ -180,25 +208,15 @@ export default function AdminInbox({ agent, onLogout }) {
               <div ref={bottomRef} />
             </div>
 
-            {/* Reply box */}
             {active.status === "open" && (
               <div style={{ padding: "16px 24px", borderTop: "1.5px solid " + BORDER, background: "#fff", display: "flex", gap: 12 }}>
-                <textarea
-                  value={reply}
-                  onChange={e => setReply(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
-                  placeholder="Type a reply... (Enter to send, Shift+Enter for new line)"
-                  rows={2}
-                  style={{ flex: 1, padding: "12px 16px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 10, color: "#2a1a10", fontSize: 14, fontFamily: "'DM Sans',sans-serif", outline: "none", resize: "none", lineHeight: 1.5 }}
-                />
-                <button onClick={sendReply} disabled={sending || !reply.trim()} style={{ padding: "0 24px", borderRadius: 10, border: "none", background: GRAD, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sending || !reply.trim() ? 0.5 : 1 }}>
-                  Send
-                </button>
+                <textarea value={reply} onChange={e => setReply(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }} placeholder="Type a reply... (Enter to send, Shift+Enter for new line)" rows={2} style={{ flex: 1, padding: "12px 16px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 10, color: "#2a1a10", fontSize: 14, fontFamily: "'DM Sans',sans-serif", outline: "none", resize: "none", lineHeight: 1.5 }} />
+                <button onClick={sendReply} disabled={sending || !reply.trim()} style={{ padding: "0 24px", borderRadius: 10, border: "none", background: GRAD, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sending || !reply.trim() ? 0.5 : 1 }}>Send</button>
               </div>
             )}
             {active.status === "closed" && (
               <div style={{ padding: "16px 24px", borderTop: "1.5px solid " + BORDER, background: "#fff", textAlign: "center", color: "#b09080", fontSize: 13 }}>
-                This conversation is closed.
+                Closed. <span onClick={() => reopenConvo(active.id)} style={{ color: AMBER, cursor: "pointer", fontWeight: 600 }}>Reopen?</span>
               </div>
             )}
           </div>
