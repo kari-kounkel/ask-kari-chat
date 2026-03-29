@@ -24,7 +24,7 @@ export default function AgentLogin({ onLogin }) {
   const inp = {
     width: "100%", padding: "12px 16px", background: SOFT,
     border: "1.5px solid " + BORDER, borderRadius: 10, color: "#2a1a10",
-    fontSize: 14, fontFamily: "'DM Sans',sans-serif", outline: "none",
+    fontSize: 16, fontFamily: "'DM Sans',sans-serif", outline: "none",
     boxSizing: "border-box", marginBottom: 16,
   };
 
@@ -45,9 +45,9 @@ export default function AgentLogin({ onLogin }) {
           )}
           <form onSubmit={handle}>
             <label style={{ display: "block", color: "#a07060", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={inp} placeholder="you@email.com" />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" style={inp} placeholder="you@email.com" />
             <label style={{ display: "block", color: "#a07060", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ ...inp, marginBottom: 28 }} placeholder="••••••••" />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" style={{ ...inp, marginBottom: 28 }} placeholder="••••••••" />
             <button type="submit" disabled={loading} style={{ width: "100%", padding: 14, background: GRAD, border: "none", borderRadius: 10, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: loading ? 0.7 : 1, boxShadow: "0 4px 16px rgba(224,56,32,0.25)" }}>
               {loading ? "Logging in..." : "Log In \u2192"}
             </button>
