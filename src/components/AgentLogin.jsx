@@ -34,7 +34,6 @@ export default function AgentLogin({ onLogin }) {
       <div style={{ width: "100%", maxWidth: 400 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <img src="/AskKari.png" alt="Ask Kari" style={{ width: 120, height: 120, objectFit: "contain" }} />
-          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, color: "#e03820", marginTop: 12, letterSpacing: "-0.5px" }}>Ask Kari</div>
           <div style={{ fontSize: 13, color: "#a07060", marginTop: 4, fontStyle: "italic" }}>Clarity with a side of mischief</div>
         </div>
         <div style={{ background: "#fff", border: "1.5px solid " + BORDER, borderRadius: 20, padding: 36, boxShadow: "0 8px 36px rgba(224,56,32,0.08)" }}>
