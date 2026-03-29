@@ -103,7 +103,7 @@
     if (!email) { emailErr.style.display = "block"; document.getElementById("ak-email").focus(); return; }
     emailErr.style.display = "none";
     const name = [first, last].filter(Boolean).join(" ") || "Friend";
-    const consentVal = document.querySelector("input[name='ak_consent']:checked").value;
+    const consentEl = document.querySelector("input[name='ak_consent']:checked"); const consentVal = consentEl ? consentEl.value : "no";
     const contentConsent = consentVal !== "no";
     const wantsCredit = consentVal === "named";
     const res = await fetch(SUPABASE_URL + "/rest/v1/conversations", {
