@@ -118,8 +118,8 @@
       var data = await res.json();
       cid = data[0].id;
       if (rem) { localStorage.setItem("ak_cid", cid); } else { sessionStorage.setItem("ak_cid", cid); }
-      await postMsg("agent", "Give me a minute!");
       if (q) { await postMsg("visitor", q); }
+      await postMsg("agent", "Give me a minute!");
       showChat(); startPoll();
     } catch(e) { console.error("Ask Kari error:", e); }
   });
