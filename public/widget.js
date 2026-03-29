@@ -2,6 +2,12 @@
   const SUPABASE_URL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
   const headers = { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
+  const LOGO = "https://chat.karikounkel.com/AskKari.png";
+  const RED = "#e03820";
+  const AMBER = "#f07830";
+  const GRAD = "linear-gradient(135deg," + RED + "," + AMBER + ")";
+  const SOFT = "#fdf6f2";
+  const BORDER = "#e8cfc0";
 
   let conversationId = sessionStorage.getItem("ask_kari_convo_id") || null;
   let pollTimer = null;
@@ -9,47 +15,65 @@
 
   const style = document.createElement("style");
   style.textContent = "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');"
-    + "#ak-bubble{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e83a1f,#f07030);border:none;cursor:pointer;box-shadow:0 4px 24px rgba(232,58,31,0.45);z-index:99999;display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform 0.2s,box-shadow 0.2s;}"
-    + "#ak-bubble:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(232,58,31,0.6);}"
-    + "#ak-panel{position:fixed;bottom:94px;right:24px;width:350px;max-height:520px;background:#fff;border:1.5px solid #f0d0c0;border-radius:20px;box-shadow:0 8px 40px rgba(232,58,31,0.15);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}"
+    + "#ak-bubble{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:" + SOFT + ";border:2px solid " + BORDER + ";cursor:pointer;box-shadow:0 4px 18px rgba(224,56,32,0.18);z-index:99999;display:flex;align-items:center;justify-content:center;transition:transform 0.2s,box-shadow 0.2s;overflow:hidden;padding:0;}"
+    + "#ak-bubble:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(224,56,32,0.28);}"
+    + "#ak-bubble img{width:54px;height:54px;object-fit:contain;border-radius:50%;}"
+    + "#ak-panel{position:fixed;bottom:98px;right:24px;width:350px;max-height:520px;background:#fff;border:1.5px solid " + BORDER + ";border-radius:20px;box-shadow:0 8px 36px rgba(224,56,32,0.12);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}"
     + "#ak-panel.open{display:flex;}"
-    + "#ak-header{background:linear-gradient(135deg,#e83a1f,#f07030);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;}"
-    + "#ak-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px;}"
-    + "#ak-subtitle{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px;font-style:italic;}"
-    + "#ak-close{background:none;border:none;color:rgba(255,255,255,0.8);font-size:22px;cursor:pointer;padding:0;line-height:1;}"
+    + "#ak-header{background:" + GRAD + ";padding:16px 20px;display:flex;align-items:center;gap:12px;}"
+    + "#ak-header img{width:36px;height:36px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0;}"
+    + "#ak-header-text{flex:1;}"
+    + "#ak-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.2px;}"
+    + "#ak-subtitle{font-size:11px;color:rgba(255,255,255,0.85);margin-top:1px;font-style:italic;}"
+    + "#ak-close{background:none;border:none;color:rgba(255,255,255,0.75);font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}"
+    + "#ak-close:hover{color:#fff;}"
     + "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;}"
-    + "#ak-intro-heading{font-size:14px;font-weight:600;color:#2a1a10;margin-bottom:2px;}"
-    + "#ak-intro-sub{font-size:12px;color:#a07060;margin-bottom:4px;}"
+    + "#ak-intro-heading{font-size:14px;font-weight:600;color:#2a1a10;}"
+    + "#ak-intro-sub{font-size:12px;color:#a07060;margin-top:-4px;}"
     + ".ak-row{display:flex;gap:8px;}"
-    + ".ak-row input{flex:1;}"
-    + "#ak-intro input{padding:10px 13px;background:#fdf8f5;border:1.5px solid #f0d0c0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}"
+    + ".ak-row input{flex:1;min-width:0;}"
+    + "#ak-intro input{width:100%;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.15s;}"
+    + "#ak-intro input:focus{border-color:" + RED + ";}"
     + "#ak-intro input::placeholder{color:#c0a090;}"
-    + "#ak-start-btn{padding:11px;background:linear-gradient(135deg,#e83a1f,#f07030);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}"
-    + "#ak-email-error{font-size:11px;color:#e83a1f;display:none;}"
-    + "#ak-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fdf8f5;}"
+    + "#ak-start-btn{padding:11px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;}"
+    + "#ak-start-btn:hover{opacity:0.88;}"
+    + "#ak-email-error{font-size:11px;color:" + RED + ";display:none;margin-top:-4px;}"
+    + "#ak-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:" + SOFT + ";}"
     + ".ak-wrap{display:flex;flex-direction:column;}"
     + ".ak-wrap.visitor{align-items:flex-end;}"
     + ".ak-wrap.agent{align-items:flex-start;}"
-    + ".ak-msg{max-width:78%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;}"
-    + ".ak-msg.visitor{background:linear-gradient(135deg,#e83a1f,#f07030);color:#fff;border-radius:14px 14px 4px 14px;font-weight:500;}"
-    + ".ak-msg.agent{background:#fff;color:#2a1a10;border-radius:14px 14px 14px 4px;border:1.5px solid #f0d0c0;}"
-    + ".ak-time{font-size:10px;color:#c0a090;margin-top:3px;padding:0 2px;}"
-    + "#ak-footer{padding:12px 14px;border-top:1.5px solid #f0d0c0;background:#fff;display:flex;gap:8px;}"
-    + "#ak-input{flex:1;padding:10px 13px;background:#fdf8f5;border:1.5px solid #f0d0c0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}"
+    + ".ak-msg{max-width:78%;padding:10px 14px;font-size:13px;line-height:1.5;}"
+    + ".ak-msg.visitor{background:" + GRAD + ";color:#fff;border-radius:14px 14px 4px 14px;font-weight:500;}"
+    + ".ak-msg.agent{background:#fff;color:#2a1a10;border-radius:14px 14px 14px 4px;border:1.5px solid " + BORDER + ";}"
+    + ".ak-time{font-size:10px;color:#b09080;margin-top:3px;padding:0 2px;}"
+    + "#ak-footer{padding:12px 14px;border-top:1.5px solid " + BORDER + ";background:#fff;display:flex;gap:8px;}"
+    + "#ak-input{flex:1;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;}"
+    + "#ak-input:focus{border-color:" + RED + ";}"
     + "#ak-input::placeholder{color:#c0a090;}"
-    + "#ak-send{padding:0 18px;background:linear-gradient(135deg,#e83a1f,#f07030);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}";
+    + "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;}"
+    + "#ak-send:hover{opacity:0.88;}";
   document.head.appendChild(style);
 
+  // Bubble with logo
   const bubble = document.createElement("button");
   bubble.id = "ak-bubble";
-  bubble.innerHTML = "💬";
   bubble.title = "Ask Kari";
+  const bubbleImg = document.createElement("img");
+  bubbleImg.src = LOGO;
+  bubbleImg.alt = "Ask Kari";
+  bubble.appendChild(bubbleImg);
   document.body.appendChild(bubble);
 
+  // Panel
   const panel = document.createElement("div");
   panel.id = "ak-panel";
-  panel.innerHTML = "<div id='ak-header'><div><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div><button id='ak-close'>×</button></div>"
-    + "<div id='ak-intro'><div id='ak-intro-heading'>Hey! Let's talk.</div><div id='ak-intro-sub'>I actually read these. Drop your info and your question.</div>"
+  panel.innerHTML = "<div id='ak-header'>"
+    + "<img src='" + LOGO + "' alt='Ask Kari' />"
+    + "<div id='ak-header-text'><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div>"
+    + "<button id='ak-close'>×</button></div>"
+    + "<div id='ak-intro'>"
+    + "<div id='ak-intro-heading'>Hey! Let's talk.</div>"
+    + "<div id='ak-intro-sub'>I actually read these. Drop your info and I'll get back to you.</div>"
     + "<div class='ak-row'><input id='ak-first' placeholder='First name' /><input id='ak-last' placeholder='Last name' /></div>"
     + "<input id='ak-email' placeholder='Email address (required)' type='email' />"
     + "<div id='ak-email-error'>Email is required — I need a way to reach you back.</div>"
