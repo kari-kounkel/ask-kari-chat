@@ -72,18 +72,19 @@
     + "<div id='ak-header-text'><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div>"
     + "<button id='ak-close'>x</button></div>"
     + "<div id='ak-intro'>"
-    + "<div id='ak-intro-heading'>Hey! Let's talk.</div>"
-    + "<div id='ak-intro-sub'>I actually read these. Drop your info and I'll get back to you.</div>"
+    + "<div id='ak-intro-heading'>Let's untangle this.</div>"
+    + "<div id='ak-intro-sub'>I read every one. Drop your info—I'll get back to you.</div>"
     + "<div class='ak-row'><input id='ak-first' placeholder='First name' /><input id='ak-last' placeholder='Last name' /></div>"
     + "<input id='ak-email' type='email' placeholder='Email address (required)' />"
     + "<div id='ak-email-error'>Email is required — I need a way to reach you back.</div>"
-    + "<div id='ak-consent-box'><strong>One quick thing:</strong>"
-    + "Kari may use questions as content, always stripped of identifying info."
+    + "<div id='ak-consent-box'><strong>One quick thing (the fine print, but friendly):</strong>"
+    + "I may turn great questions into content—always stripped of identifying details."
     + "<div class='ak-check-row' style='margin-top:8px;'>"
     + "<label><input type='checkbox' id='ak-consent-ok' /> I'm okay with that</label>"
     + "<label><input type='checkbox' id='ak-wants-credit' /> Name me if you feature my question</label>"
     + "</div></div>"
-    + "<button id='ak-start-btn'>Start chatting \u2192</button>"
+    + "<label style='display:flex;align-items:center;gap:8px;font-size:12px;color:#6a4030;cursor:pointer;'><input type='checkbox' id='ak-remember' style='accent-color:#e03820;width:14px;height:14px;' checked /> Remember my conversation on this device</label>"
+    + "<button id='ak-start-btn'>Let's do this \u2192</button>"
     + "</div>"
     + "<div id='ak-messages' style='display:none'></div>"
     + "<div id='ak-footer' style='display:none'><input id='ak-input' placeholder='Type a message...' /><button id='ak-send'>Send</button></div>"
@@ -113,7 +114,7 @@
       });
       const data = await res.json();
       conversationId = data[0].id;
-      localStorage.setItem("ask_kari_convo_id", conversationId);
+      const remember = document.getElementById("ak-remember") && document.getElementById("ak-remember").checked; if (remember) { localStorage.setItem("ask_kari_convo_id", conversationId); } else { sessionStorage.setItem("ask_kari_convo_id", conversationId); }
       await sendSystemMsg("Hey " + (first || name) + "! Got your message \u2014 I'll get back to you shortly. \uD83D\uDC4B");
       showChat();
       startPolling();
