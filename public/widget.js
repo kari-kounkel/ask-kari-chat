@@ -1,195 +1,194 @@
 (function () {
-  const SUPABASE_URL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
-  const headers = { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
-  const LOGO = "https://chat.karikounkel.com/AskKari.png";
-  const LOGO_WHITE = "https://chat.karikounkel.com/AskKari-white.png";
-  const RED = "#e03820";
-  const AMBER = "#f07830";
-  const GRAD = "linear-gradient(135deg," + RED + "," + AMBER + ")";
-  const SOFT = "#fdf6f2";
-  const BORDER = "#e8cfc0";
+  var SURL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
+  var SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
+  var H = { "Content-Type": "application/json", "apikey": SKEY, "Authorization": "Bearer " + SKEY };
+  var LOGO = "https://chat.karikounkel.com/AskKari.png";
+  var LOGO_W = "https://chat.karikounkel.com/AskKari-white.png";
+  var GRAD = "linear-gradient(135deg,#e03820,#f07830)";
+  var SOFT = "#fdf6f2"; var BOR = "#e8cfc0"; var RED = "#e03820";
 
-  let conversationId = localStorage.getItem("ask_kari_convo_id") || null;
-  let pollTimer = null;
-  let lastMessageCount = 0;
+  var cid = localStorage.getItem("ak_cid") || null;
+  var poll = null; var lastCount = 0;
 
-  const style = document.createElement("style");
-  style.textContent = "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');"
-    + "#ak-bubble{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:" + SOFT + ";border:2px solid " + BORDER + ";cursor:pointer;box-shadow:0 4px 18px rgba(224,56,32,0.18);z-index:99999;display:flex;align-items:center;justify-content:center;transition:transform 0.2s;overflow:hidden;padding:0;}"
-    + "#ak-bubble:hover{transform:scale(1.08);}"
-    + "#ak-bubble img{width:54px;height:54px;object-fit:contain;border-radius:50%;}"
-    + "#ak-panel{position:fixed;bottom:98px;right:24px;width:350px;max-height:560px;background:#fff;border:1.5px solid " + BORDER + ";border-radius:20px;box-shadow:0 8px 36px rgba(224,56,32,0.12);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}"
-    + "#ak-panel.open{display:flex;}"
-    + "#ak-header{background:" + GRAD + ";padding:16px 20px;display:flex;align-items:center;gap:12px;}"
-    + "#ak-header img{width:36px;height:36px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0;}"
-    + "#ak-header-text{flex:1;}"
-    + "#ak-title{font-size:17px;font-weight:700;color:#fff;}"
-    + "#ak-subtitle{font-size:11px;color:rgba(255,255,255,0.85);margin-top:1px;font-style:italic;}"
-    + "#ak-close{background:none;border:none;color:rgba(255,255,255,0.75);font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}"
-    + "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;overflow-y:auto;}"
-    + "#ak-intro-heading{font-size:14px;font-weight:600;color:#2a1a10;}"
-    + "#ak-intro-sub{font-size:12px;color:#a07060;margin-top:-4px;}"
-    + ".ak-row{display:flex;gap:8px;}"
-    + ".ak-row input{flex:1;min-width:0;}"
-    + "#ak-intro input{width:100%;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;}"
-    + "#ak-intro input::placeholder{color:#c0a090;}"
-    + "#ak-consent-box{background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;padding:12px 14px;font-size:12px;color:#6a4030;line-height:1.6;}"
-    + "#ak-consent-box strong{display:block;margin-bottom:8px;font-size:12px;color:#2a1a10;}"
-    + ".ak-check-row{display:flex;flex-direction:column;gap:6px;}"
-    + ".ak-check-row label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#2a1a10;}"
-    + ".ak-check-row input[type=checkbox]{accent-color:" + RED + ";width:14px;height:14px;cursor:pointer;}"
-    + "#ak-start-btn{padding:12px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}"
-    + "#ak-email-error{font-size:11px;color:" + RED + ";display:none;}"
-    + "#ak-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:" + SOFT + ";}"
-    + ".ak-wrap{display:flex;flex-direction:column;}"
-    + ".ak-wrap.visitor{align-items:flex-end;}"
-    + ".ak-wrap.agent{align-items:flex-start;}"
-    + ".ak-msg{max-width:78%;padding:10px 14px;font-size:13px;line-height:1.5;border-radius:14px;}"
-    + ".ak-msg.visitor{background:" + GRAD + ";color:#fff;border-radius:14px 14px 4px 14px;font-weight:500;}"
-    + ".ak-msg.agent{background:#fff;color:#2a1a10;border-radius:14px 14px 14px 4px;border:1.5px solid " + BORDER + ";}"
-    + ".ak-time{font-size:10px;color:#b09080;margin-top:3px;padding:0 2px;}"
-    + "#ak-footer{padding:12px 14px;border-top:1.5px solid " + BORDER + ";background:#fff;display:flex;gap:8px;}"
-    + "#ak-input{flex:1;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}"
-    + "#ak-input::placeholder{color:#c0a090;}"
-    + "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}"
-    + "#ak-reset{text-align:center;padding:8px;background:#fff;border-top:1px solid " + BORDER + ";font-size:11px;color:#b09080;cursor:pointer;}";
-  document.head.appendChild(style);
+  var css = document.createElement("style");
+  css.textContent = [
+    "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');",
+    "#ak-bub{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:#fdf6f2;border:2px solid #e8cfc0;cursor:pointer;box-shadow:0 4px 18px rgba(224,56,32,0.18);z-index:99999;display:flex;align-items:center;justify-content:center;transition:transform 0.2s;overflow:hidden;padding:0;}",
+    "#ak-bub:hover{transform:scale(1.08);}",
+    "#ak-bub img{width:54px;height:54px;object-fit:contain;border-radius:50%;}",
+    "#ak-pan{position:fixed;bottom:98px;right:24px;width:350px;max-height:600px;background:#fff;border:1.5px solid #e8cfc0;border-radius:20px;box-shadow:0 8px 36px rgba(224,56,32,0.12);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}",
+    "#ak-pan.open{display:flex;}",
+    "#ak-hdr{background:" + GRAD + ";padding:16px 20px;display:flex;align-items:center;gap:12px;}",
+    "#ak-hdr img{width:36px;height:36px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0;}",
+    "#ak-hdr-txt{flex:1;}",
+    "#ak-title{font-size:17px;font-weight:700;color:#fff;}",
+    "#ak-sub{font-size:11px;color:rgba(255,255,255,0.85);margin-top:1px;font-style:italic;}",
+    "#ak-x{background:none;border:none;color:rgba(255,255,255,0.75);font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}",
+    "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;overflow-y:auto;}",
+    "#ak-intro h3{margin:0;font-size:15px;font-weight:700;color:#2a1a10;}",
+    "#ak-intro p{margin:0;font-size:12px;color:#a07060;}",
+    ".ak-row{display:flex;gap:8px;}",
+    ".ak-row input{flex:1;min-width:0;}",
+    "#ak-intro input,#ak-intro textarea{width:100%;padding:10px 13px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;}",
+    "#ak-intro textarea{resize:none;line-height:1.5;}",
+    "#ak-intro input::placeholder,#ak-intro textarea::placeholder{color:#c0a090;}",
+    "#ak-err{font-size:11px;color:#e03820;display:none;}",
+    "#ak-cb{background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;padding:12px 14px;font-size:12px;color:#6a4030;line-height:1.6;}",
+    "#ak-cb strong{display:block;margin-bottom:6px;font-size:12px;color:#2a1a10;}",
+    ".ak-cbl{display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:#2a1a10;margin-bottom:5px;line-height:1.4;}",
+    ".ak-cbl input[type=checkbox]{accent-color:#e03820;width:14px;height:14px;flex-shrink:0;margin-top:2px;cursor:pointer;}",
+    "#ak-rem-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#a07060;cursor:pointer;}",
+    "#ak-rem-row input{accent-color:#e03820;width:14px;height:14px;flex-shrink:0;cursor:pointer;}",
+    "#ak-go{padding:12px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}",
+    "#ak-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fdf6f2;}",
+    ".ak-w{display:flex;flex-direction:column;}",
+    ".ak-w.visitor{align-items:flex-end;}",
+    ".ak-w.agent{align-items:flex-start;}",
+    ".ak-m{max-width:78%;padding:10px 14px;font-size:13px;line-height:1.5;border-radius:14px;}",
+    ".ak-m.visitor{background:" + GRAD + ";color:#fff;border-radius:14px 14px 4px 14px;font-weight:500;}",
+    ".ak-m.agent{background:#fff;color:#2a1a10;border-radius:14px 14px 14px 4px;border:1.5px solid #e8cfc0;}",
+    ".ak-t{font-size:10px;color:#b09080;margin-top:3px;padding:0 2px;}",
+    "#ak-foot{padding:12px 14px;border-top:1.5px solid #e8cfc0;background:#fff;display:flex;gap:8px;}",
+    "#ak-inp{flex:1;padding:10px 13px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}",
+    "#ak-inp::placeholder{color:#c0a090;}",
+    "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}",
+    "#ak-reset{text-align:center;padding:8px;background:#fff;border-top:1px solid #e8cfc0;font-size:11px;color:#b09080;cursor:pointer;display:none;}"
+  ].join("");
+  document.head.appendChild(css);
 
-  const bubble = document.createElement("button");
-  bubble.id = "ak-bubble";
-  bubble.title = "Ask Kari";
-  const bImg = document.createElement("img");
-  bImg.src = LOGO;
-  bImg.alt = "Ask Kari";
-  bubble.appendChild(bImg);
-  document.body.appendChild(bubble);
+  var bub = document.createElement("button");
+  bub.id = "ak-bub"; bub.title = "Ask Kari";
+  var bi = document.createElement("img"); bi.src = LOGO; bi.alt = "Ask Kari";
+  bub.appendChild(bi); document.body.appendChild(bub);
 
-  const panel = document.createElement("div");
-  panel.id = "ak-panel";
-  panel.innerHTML = "<div id='ak-header'>"
-    + "<img src='" + LOGO_WHITE + "' alt='Ask Kari' />"
-    + "<div id='ak-header-text'><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div>"
-    + "<button id='ak-close'>x</button></div>"
-    + "<div id='ak-intro'>"
-    + "<div id='ak-intro-heading'>Let's untangle this.</div>"
-    + "<div id='ak-intro-sub'>I read every one. Drop your info—I'll get back to you.</div>"
-    + "<div class='ak-row'><input id='ak-first' placeholder='First name' /><input id='ak-last' placeholder='Last name' /></div>"
-    + "<input id='ak-email' type='email' placeholder='Email address (required)' />"
-    + "<div id='ak-email-error'>Email is required — I need a way to reach you back.</div>"
-    + "<div id='ak-consent-box'><strong>One quick thing (the fine print, but friendly):</strong>"
-    + "I may turn great questions into content—always stripped of identifying details."
-    + "<div class='ak-check-row' style='margin-top:8px;'>"
-    + "<label><input type='checkbox' id='ak-consent-ok' /> I'm okay with that</label>"
-    + "<label><input type='checkbox' id='ak-wants-credit' /> Name me if you feature my question</label>"
-    + "</div></div>"
-    + "<label style='display:flex;align-items:center;gap:8px;font-size:12px;color:#6a4030;cursor:pointer;'><input type='checkbox' id='ak-remember' style='accent-color:#e03820;width:14px;height:14px;' checked /> Remember my conversation on this device</label>"
-    + "<button id='ak-start-btn'>Let's do this \u2192</button>"
-    + "</div>"
-    + "<div id='ak-messages' style='display:none'></div>"
-    + "<div id='ak-footer' style='display:none'><input id='ak-input' placeholder='Type a message...' /><button id='ak-send'>Send</button></div>"
-    + "<div id='ak-reset' style='display:none'>Start a new conversation</div>";
-  document.body.appendChild(panel);
+  var pan = document.createElement("div"); pan.id = "ak-pan";
+  pan.innerHTML = [
+    "<div id='ak-hdr'>",
+      "<img src='" + LOGO_W + "' alt='Ask Kari'/>",
+      "<div id='ak-hdr-txt'><div id='ak-title'>Ask Kari</div><div id='ak-sub'>Clarity with a side of mischief</div></div>",
+      "<button id='ak-x'>x</button>",
+    "</div>",
+    "<div id='ak-intro'>",
+      "<h3>Let\u2019s untangle this.</h3>",
+      "<p>I read every one. Drop your info\u2014I\u2019ll get back to you.</p>",
+      "<div class='ak-row'><input id='ak-fn' placeholder='First name'/><input id='ak-ln' placeholder='Last name'/></div>",
+      "<input id='ak-em' type='email' placeholder='Email address (required)'/>",
+      "<div id='ak-err'>Email is required \u2014 I need a way to reach you back.</div>",
+      "<textarea id='ak-q' rows='3' placeholder='What\u2019s your question or ask?'></textarea>",
+      "<div id='ak-cb'>",
+        "<strong>One quick thing (the fine print, but friendly):</strong>",
+        "I may turn great questions into content\u2014always stripped of identifying details.",
+        "<div style='margin-top:8px;'>",
+          "<label class='ak-cbl'><input type='checkbox' id='ak-ok'/> I\u2019m okay with that</label>",
+          "<label class='ak-cbl'><input type='checkbox' id='ak-named'/> Name me if you feature my question</label>",
+        "</div>",
+      "</div>",
+      "<label id='ak-rem-row'><input type='checkbox' id='ak-rem' checked/> Remember my conversation on this device</label>",
+      "<button id='ak-go'>Let\u2019s do this \u2192</button>",
+    "</div>",
+    "<div id='ak-msgs' style='display:none'></div>",
+    "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
+    "<div id='ak-reset'>Start a new conversation</div>"
+  ].join("");
+  document.body.appendChild(pan);
 
-  bubble.addEventListener("click", () => panel.classList.toggle("open"));
-  document.getElementById("ak-close").addEventListener("click", () => panel.classList.remove("open"));
+  bub.addEventListener("click", function() { pan.classList.toggle("open"); });
+  document.getElementById("ak-x").addEventListener("click", function() { pan.classList.remove("open"); });
 
-  if (conversationId) { showChat(); loadMessages(); startPolling(); }
+  if (cid) { showChat(); loadMsgs(); startPoll(); }
 
-  document.getElementById("ak-start-btn").addEventListener("click", async () => {
+  document.getElementById("ak-go").addEventListener("click", async function() {
     try {
-      const first = (document.getElementById("ak-first").value || "").trim();
-      const last = (document.getElementById("ak-last").value || "").trim();
-      const email = (document.getElementById("ak-email").value || "").trim();
-      const emailErr = document.getElementById("ak-email-error");
-      if (!email) { emailErr.style.display = "block"; return; }
-      emailErr.style.display = "none";
-      const name = [first, last].filter(Boolean).join(" ") || "Friend";
-      const contentConsent = document.getElementById("ak-consent-ok").checked;
-      const wantsCredit = document.getElementById("ak-wants-credit").checked;
-      const res = await fetch(SUPABASE_URL + "/rest/v1/conversations", {
+      var fn = (document.getElementById("ak-fn").value || "").trim();
+      var ln = (document.getElementById("ak-ln").value || "").trim();
+      var em = (document.getElementById("ak-em").value || "").trim();
+      var q  = (document.getElementById("ak-q").value  || "").trim();
+      var err = document.getElementById("ak-err");
+      if (!em) { err.style.display = "block"; return; }
+      err.style.display = "none";
+      var name = [fn, ln].filter(Boolean).join(" ") || "Friend";
+      var ok    = document.getElementById("ak-ok").checked;
+      var named = document.getElementById("ak-named").checked;
+      var rem   = document.getElementById("ak-rem").checked;
+      var res = await fetch(SURL + "/rest/v1/conversations", {
         method: "POST",
-        headers: { ...headers, "Prefer": "return=representation" },
-        body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: name, visitor_email: email, site_origin: window.location.origin, status: "open", content_consent: contentConsent, wants_credit: wantsCredit }),
+        headers: Object.assign({}, H, { "Prefer": "return=representation" }),
+        body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: name, visitor_email: em, site_origin: window.location.origin, status: "open", content_consent: ok, wants_credit: named })
       });
-      const data = await res.json();
-      conversationId = data[0].id;
-      const remember = document.getElementById("ak-remember") && document.getElementById("ak-remember").checked; if (remember) { localStorage.setItem("ask_kari_convo_id", conversationId); } else { sessionStorage.setItem("ask_kari_convo_id", conversationId); }
-      await sendSystemMsg("Hey " + (first || name) + "! Got your message \u2014 I'll get back to you shortly. \uD83D\uDC4B");
-      showChat();
-      startPolling();
-    } catch(e) { console.error("Ask Kari start error:", e); }
+      var data = await res.json();
+      cid = data[0].id;
+      if (rem) { localStorage.setItem("ak_cid", cid); } else { sessionStorage.setItem("ak_cid", cid); }
+      await postMsg("agent", "Give me a minute!");
+      if (q) { await postMsg("visitor", q); }
+      showChat(); startPoll();
+    } catch(e) { console.error("Ask Kari error:", e); }
   });
 
-  document.getElementById("ak-send").addEventListener("click", sendMessage);
-  document.getElementById("ak-input").addEventListener("keydown", function(e) { if (e.key === "Enter") sendMessage(); });
+  document.getElementById("ak-send").addEventListener("click", sendMsg);
+  document.getElementById("ak-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") sendMsg(); });
   document.getElementById("ak-reset").addEventListener("click", function() {
     if (confirm("Start a new conversation? Your history stays on file.")) {
-      localStorage.removeItem("ask_kari_convo_id");
-      conversationId = null;
-      lastMessageCount = 0;
-      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      localStorage.removeItem("ak_cid"); sessionStorage.removeItem("ak_cid");
+      cid = null; lastCount = 0;
+      if (poll) { clearInterval(poll); poll = null; }
       document.getElementById("ak-intro").style.display = "flex";
-      document.getElementById("ak-messages").style.display = "none";
-      document.getElementById("ak-footer").style.display = "none";
+      document.getElementById("ak-msgs").style.display = "none";
+      document.getElementById("ak-foot").style.display = "none";
       document.getElementById("ak-reset").style.display = "none";
-      document.getElementById("ak-messages").innerHTML = "";
+      document.getElementById("ak-msgs").innerHTML = "";
     }
   });
 
-  async function sendMessage() {
+  async function postMsg(sender, body) {
+    await fetch(SURL + "/rest/v1/messages", {
+      method: "POST",
+      headers: Object.assign({}, H, { "Prefer": "return=minimal" }),
+      body: JSON.stringify({ conversation_id: cid, sender: sender, sender_name: sender === "agent" ? "Kari" : null, body: body })
+    });
+  }
+
+  async function sendMsg() {
     try {
-      const input = document.getElementById("ak-input");
-      const body = (input.value || "").trim();
-      if (!body || !conversationId) return;
-      input.value = "";
-      await fetch(SUPABASE_URL + "/rest/v1/messages", { method: "POST", headers: { ...headers, "Prefer": "return=minimal" }, body: JSON.stringify({ conversation_id: conversationId, sender: "visitor", body: body }) });
-      await fetch(SUPABASE_URL + "/rest/v1/conversations?id=eq." + conversationId, { method: "PATCH", headers, body: JSON.stringify({ updated_at: new Date().toISOString() }) });
-      loadMessages();
+      var inp = document.getElementById("ak-inp");
+      var body = (inp.value || "").trim();
+      if (!body || !cid) return;
+      inp.value = "";
+      await postMsg("visitor", body);
+      await fetch(SURL + "/rest/v1/conversations?id=eq." + cid, { method: "PATCH", headers: H, body: JSON.stringify({ updated_at: new Date().toISOString() }) });
+      loadMsgs();
     } catch(e) { console.error("Ask Kari send error:", e); }
   }
 
-  async function sendSystemMsg(body) {
+  async function loadMsgs() {
     try {
-      await fetch(SUPABASE_URL + "/rest/v1/messages", { method: "POST", headers: { ...headers, "Prefer": "return=minimal" }, body: JSON.stringify({ conversation_id: conversationId, sender: "agent", sender_name: "Kari", body: body }) });
-    } catch(e) { console.error("Ask Kari system msg error:", e); }
-  }
-
-  async function loadMessages() {
-    try {
-      if (!conversationId) return;
-      const res = await fetch(SUPABASE_URL + "/rest/v1/messages?conversation_id=eq." + conversationId + "&order=created_at.asc", { headers });
-      const msgs = await res.json();
-      if (!Array.isArray(msgs) || msgs.length === lastMessageCount) return;
-      lastMessageCount = msgs.length;
-      const container = document.getElementById("ak-messages");
-      container.innerHTML = "";
+      if (!cid) return;
+      var res = await fetch(SURL + "/rest/v1/messages?conversation_id=eq." + cid + "&order=created_at.asc", { headers: H });
+      var msgs = await res.json();
+      if (!Array.isArray(msgs) || msgs.length === lastCount) return;
+      lastCount = msgs.length;
+      var c = document.getElementById("ak-msgs");
+      c.innerHTML = "";
       msgs.forEach(function(m) {
-        const wrap = document.createElement("div");
-        wrap.className = "ak-wrap " + m.sender;
-        const bub = document.createElement("div");
-        bub.className = "ak-msg " + m.sender;
-        bub.textContent = m.body;
-        const time = document.createElement("div");
-        time.className = "ak-time";
-        time.textContent = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        wrap.appendChild(bub);
-        wrap.appendChild(time);
-        container.appendChild(wrap);
+        var w = document.createElement("div"); w.className = "ak-w " + m.sender;
+        var b = document.createElement("div"); b.className = "ak-m " + m.sender; b.textContent = m.body;
+        var t = document.createElement("div"); t.className = "ak-t";
+        t.textContent = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        w.appendChild(b); w.appendChild(t); c.appendChild(w);
       });
-      container.scrollTop = container.scrollHeight;
+      c.scrollTop = c.scrollHeight;
     } catch(e) { console.error("Ask Kari load error:", e); }
   }
 
   function showChat() {
     document.getElementById("ak-intro").style.display = "none";
-    document.getElementById("ak-messages").style.display = "flex";
-    document.getElementById("ak-footer").style.display = "flex";
+    document.getElementById("ak-msgs").style.display = "flex";
+    document.getElementById("ak-foot").style.display = "flex";
     document.getElementById("ak-reset").style.display = "block";
+    loadMsgs();
   }
 
-  function startPolling() {
-    if (pollTimer) return;
-    pollTimer = setInterval(loadMessages, 4000);
+  function startPoll() {
+    if (poll) return;
+    poll = setInterval(loadMsgs, 4000);
   }
 })();
