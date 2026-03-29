@@ -19,7 +19,7 @@
     + "#ak-bubble{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:" + SOFT + ";border:2px solid " + BORDER + ";cursor:pointer;box-shadow:0 4px 18px rgba(224,56,32,0.18);z-index:99999;display:flex;align-items:center;justify-content:center;transition:transform 0.2s,box-shadow 0.2s;overflow:hidden;padding:0;}"
     + "#ak-bubble:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(224,56,32,0.28);}"
     + "#ak-bubble img{width:54px;height:54px;object-fit:contain;border-radius:50%;}"
-    + "#ak-panel{position:fixed;bottom:98px;right:24px;width:350px;max-height:520px;background:#fff;border:1.5px solid " + BORDER + ";border-radius:20px;box-shadow:0 8px 36px rgba(224,56,32,0.12);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}"
+    + "#ak-panel{position:fixed;bottom:98px;right:24px;width:350px;max-height:560px;background:#fff;border:1.5px solid " + BORDER + ";border-radius:20px;box-shadow:0 8px 36px rgba(224,56,32,0.12);z-index:99998;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;}"
     + "#ak-panel.open{display:flex;}"
     + "#ak-header{background:" + GRAD + ";padding:16px 20px;display:flex;align-items:center;gap:12px;}"
     + "#ak-header img{width:36px;height:36px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0;}"
@@ -27,17 +27,20 @@
     + "#ak-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.2px;}"
     + "#ak-subtitle{font-size:11px;color:rgba(255,255,255,0.85);margin-top:1px;font-style:italic;}"
     + "#ak-close{background:none;border:none;color:rgba(255,255,255,0.75);font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}"
-    + "#ak-close:hover{color:#fff;}"
-    + "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;}"
+    + "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;overflow-y:auto;}"
     + "#ak-intro-heading{font-size:14px;font-weight:600;color:#2a1a10;}"
     + "#ak-intro-sub{font-size:12px;color:#a07060;margin-top:-4px;}"
     + ".ak-row{display:flex;gap:8px;}"
     + ".ak-row input{flex:1;min-width:0;}"
-    + "#ak-intro input{width:100%;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.15s;}"
-    + "#ak-intro input:focus{border-color:" + RED + ";}"
+    + "#ak-intro input[type=text],#ak-intro input[type=email]{width:100%;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.15s;}"
+    + "#ak-intro input[type=text]:focus,#ak-intro input[type=email]:focus{border-color:" + RED + ";}"
     + "#ak-intro input::placeholder{color:#c0a090;}"
-    + "#ak-start-btn{padding:11px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;}"
-    + "#ak-start-btn:hover{opacity:0.88;}"
+    + "#ak-consent-box{background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;padding:12px 14px;font-size:12px;color:#6a4030;line-height:1.6;}"
+    + "#ak-consent-box strong{display:block;margin-bottom:6px;font-size:12px;color:#2a1a10;}"
+    + ".ak-radio-row{display:flex;flex-direction:column;gap:5px;margin-top:4px;}"
+    + ".ak-radio-row label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#2a1a10;}"
+    + ".ak-radio-row input[type=radio]{accent-color:" + RED + ";}"
+    + "#ak-start-btn{padding:11px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}"
     + "#ak-email-error{font-size:11px;color:" + RED + ";display:none;margin-top:-4px;}"
     + "#ak-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:" + SOFT + ";}"
     + ".ak-wrap{display:flex;flex-direction:column;}"
@@ -48,14 +51,11 @@
     + ".ak-msg.agent{background:#fff;color:#2a1a10;border-radius:14px 14px 14px 4px;border:1.5px solid " + BORDER + ";}"
     + ".ak-time{font-size:10px;color:#b09080;margin-top:3px;padding:0 2px;}"
     + "#ak-footer{padding:12px 14px;border-top:1.5px solid " + BORDER + ";background:#fff;display:flex;gap:8px;}"
-    + "#ak-input{flex:1;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;}"
-    + "#ak-input:focus{border-color:" + RED + ";}"
+    + "#ak-input{flex:1;padding:10px 13px;background:" + SOFT + ";border:1.5px solid " + BORDER + ";border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}"
     + "#ak-input::placeholder{color:#c0a090;}"
-    + "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;}"
-    + "#ak-send:hover{opacity:0.88;}";
+    + "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}";
   document.head.appendChild(style);
 
-  // Bubble with logo
   const bubble = document.createElement("button");
   bubble.id = "ak-bubble";
   bubble.title = "Ask Kari";
@@ -65,20 +65,27 @@
   bubble.appendChild(bubbleImg);
   document.body.appendChild(bubble);
 
-  // Panel
   const panel = document.createElement("div");
   panel.id = "ak-panel";
   panel.innerHTML = "<div id='ak-header'>"
     + "<img src='" + LOGO_WHITE + "' alt='Ask Kari' />"
     + "<div id='ak-header-text'><div id='ak-title'>Ask Kari</div><div id='ak-subtitle'>Clarity with a side of mischief</div></div>"
-    + "<button id='ak-close'>×</button></div>"
+    + "<button id='ak-close'>x</button></div>"
     + "<div id='ak-intro'>"
     + "<div id='ak-intro-heading'>Hey! Let's talk.</div>"
     + "<div id='ak-intro-sub'>I actually read these. Drop your info and I'll get back to you.</div>"
-    + "<div class='ak-row'><input id='ak-first' placeholder='First name' /><input id='ak-last' placeholder='Last name' /></div>"
-    + "<input id='ak-email' placeholder='Email address (required)' type='email' />"
+    + "<div class='ak-row'><input id='ak-first' type='text' placeholder='First name' /><input id='ak-last' type='text' placeholder='Last name' /></div>"
+    + "<input id='ak-email' type='email' placeholder='Email address (required)' />"
     + "<div id='ak-email-error'>Email is required — I need a way to reach you back.</div>"
-    + "<button id='ak-start-btn'>Start chatting →</button></div>"
+    + "<div id='ak-consent-box'>"
+    + "<strong>One quick thing before you ask:</strong>"
+    + "Kari may use questions as content — always stripped of all identifying info. Would you like to be named if your question is featured?"
+    + "<div class='ak-radio-row'>"
+    + "<label><input type='radio' name='ak_consent' value='no' checked /> No thanks — keep it private</label>"
+    + "<label><input type='radio' name='ak_consent' value='anon' /> Yes, but keep me anonymous</label>"
+    + "<label><input type='radio' name='ak_consent' value='named' /> Yes, and you can name me</label>"
+    + "</div></div>"
+    + "<button id='ak-start-btn'>Start chatting \u2192</button></div>"
     + "<div id='ak-messages' style='display:none'></div>"
     + "<div id='ak-footer' style='display:none'><input id='ak-input' placeholder='Type a message...' /><button id='ak-send'>Send</button></div>";
   document.body.appendChild(panel);
@@ -96,15 +103,18 @@
     if (!email) { emailErr.style.display = "block"; document.getElementById("ak-email").focus(); return; }
     emailErr.style.display = "none";
     const name = [first, last].filter(Boolean).join(" ") || "Friend";
+    const consentVal = document.querySelector("input[name='ak_consent']:checked").value;
+    const contentConsent = consentVal !== "no";
+    const wantsCredit = consentVal === "named";
     const res = await fetch(SUPABASE_URL + "/rest/v1/conversations", {
       method: "POST",
       headers: { ...headers, "Prefer": "return=representation" },
-      body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: name, visitor_email: email, site_origin: window.location.origin, status: "open" }),
+      body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: name, visitor_email: email, site_origin: window.location.origin, status: "open", content_consent: contentConsent, wants_credit: wantsCredit }),
     });
     const data = await res.json();
     conversationId = data[0].id;
     sessionStorage.setItem("ask_kari_convo_id", conversationId);
-    await sendSystemMessage("Hey " + (first || name) + "! Got your message — I'll get back to you shortly. \uD83D\uDC4B");
+    await sendSystemMessage("Hey " + (first || name) + "! Got your message \u2014 I'll get back to you shortly. \uD83D\uDC4B");
     showChat();
     startPolling();
   });
