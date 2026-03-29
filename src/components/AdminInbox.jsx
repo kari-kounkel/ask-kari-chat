@@ -23,7 +23,7 @@ export default function AdminInbox({ agent, onLogout }) {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [sortIdx, setSortIdx] = useState(0);
-  const [showClosed, setShowClosed] = useState(true);
+  const [showClosed, setShowClosed] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function AdminInbox({ agent, onLogout }) {
     if (!reply.trim() || !active) return;
     setSending(true);
     await supabase.from("messages").insert({ conversation_id: active.id, sender: "agent", sender_name: agent.email, body: reply.trim() });
-    await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", active.id);
+    await supabase.from("conversations").update({ updated_at: new Date().toISOString(), last_sender: "agent" }).eq("id", active.id);
     setReply("");
     setSending(false);
   };
@@ -95,7 +95,7 @@ export default function AdminInbox({ agent, onLogout }) {
 
   const consentLabel = (c) => {
     if (c.content_consent === null || c.content_consent === undefined) return null;
-    if (!c.content_consent) return { text: "No content use", color: "#b09080" };
+    if (!c.content_consent) return null;
     if (c.wants_credit) return { text: "OK to use · wants credit", color: AMBER };
     return { text: "OK to use · anonymous", color: "#7ab87a" };
   };
@@ -107,15 +107,23 @@ export default function AdminInbox({ agent, onLogout }) {
     })
     .sort(SORTS[sortIdx].fn);
 
-  const open = filtered.filter(c => c.status === "open");
+  const unanswered = filtered.filter(c => c.status === "open" && c.last_sender === "visitor");
+  const answered = filtered.filter(c => c.status === "open" && c.last_sender !== "visitor");
   const closed = filtered.filter(c => c.status === "closed");
+
+  const SectionLabel = ({ label, count, color }) => (
+    <div style={{ padding: "10px 14px 6px", fontSize: 10, color: color || AMBER, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+      {label} <span style={{ background: color || AMBER, color: "#fff", borderRadius: 10, padding: "1px 7px", fontSize: 10, fontWeight: 700 }}>{count}</span>
+    </div>
+  );
 
   const ConvoCard = ({ c, dimmed }) => {
     const consent = consentLabel(c);
+    const needsReply = c.last_sender === "visitor" && c.status === "open";
     return (
-      <div onClick={() => setActive(c)} style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff5f0" : "transparent", borderLeft: active?.id === c.id ? "3px solid " + RED : "3px solid transparent", transition: "all 0.15s", opacity: dimmed ? 0.6 : 1 }}>
+      <div onClick={() => setActive(c)} style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff5f0" : "transparent", borderLeft: active?.id === c.id ? "3px solid " + RED : needsReply ? "3px solid " + RED : "3px solid transparent", transition: "all 0.15s", opacity: dimmed ? 0.6 : 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: dimmed ? "#a07060" : "#2a1a10" }}>{c.visitor_name || "Visitor"}</span>
+          <span style={{ fontSize: 13, fontWeight: needsReply ? 700 : 600, color: dimmed ? "#a07060" : "#2a1a10" }}>{c.visitor_name || "Visitor"}</span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span style={{ fontSize: 10, color: "#b09080" }}>{timeAgo(c.updated_at)}</span>
             <span onClick={e => { e.stopPropagation(); deleteConvo(c.id); }} style={{ fontSize: 14, color: "#c0a090", cursor: "pointer", lineHeight: 1, padding: "0 2px" }} title="Delete">×</span>
@@ -123,6 +131,7 @@ export default function AdminInbox({ agent, onLogout }) {
         </div>
         <div style={{ fontSize: 11, color: AMBER, fontWeight: 600, marginBottom: 2 }}>{siteTag(c.site_origin)}</div>
         {c.visitor_email && <div style={{ fontSize: 11, color: "#a07060" }}>{c.visitor_email}</div>}
+        {needsReply && <div style={{ fontSize: 10, color: RED, marginTop: 3, fontWeight: 700 }}>● Needs reply</div>}
         {consent && <div style={{ fontSize: 10, color: consent.color, marginTop: 3, fontStyle: "italic" }}>{consent.text}</div>}
       </div>
     );
@@ -158,22 +167,35 @@ export default function AdminInbox({ agent, onLogout }) {
               <select value={sortIdx} onChange={e => setSortIdx(Number(e.target.value))} style={{ flex: 1, padding: "5px 8px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 6, color: "#2a1a10", fontSize: 11, fontFamily: "'DM Sans',sans-serif", outline: "none", cursor: "pointer" }}>
                 {SORTS.map((s, i) => <option key={i} value={i}>{s.label}</option>)}
               </select>
-              <span onClick={() => setShowClosed(p => !p)} style={{ fontSize: 11, color: showClosed ? AMBER : "#b09080", cursor: "pointer", flexShrink: 0, fontWeight: 600 }}>
-                {showClosed ? "Hide closed" : "Show closed"}
-              </span>
             </div>
           </div>
 
           <div style={{ flex: 1, overflowY: "auto" }}>
-            <div style={{ padding: "10px 14px 6px", fontSize: 10, color: AMBER, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Open ({open.length})</div>
-            {open.length === 0 && <div style={{ padding: "10px 14px", fontSize: 12, color: "#b09080" }}>No open conversations</div>}
-            {open.map(c => <ConvoCard key={c.id} c={c} dimmed={false} />)}
-            {showClosed && closed.length > 0 && (
+            {unanswered.length > 0 && (
               <>
-                <div style={{ padding: "10px 14px 6px", fontSize: 10, color: "#b09080", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginTop: 8 }}>Closed ({closed.length})</div>
-                {closed.map(c => <ConvoCard key={c.id} c={c} dimmed={true} />)}
+                <SectionLabel label="Needs Reply" count={unanswered.length} color={RED} />
+                {unanswered.map(c => <ConvoCard key={c.id} c={c} dimmed={false} />)}
               </>
             )}
+
+            {answered.length > 0 && (
+              <>
+                <SectionLabel label="Open" count={answered.length} color={AMBER} />
+                {answered.map(c => <ConvoCard key={c.id} c={c} dimmed={false} />)}
+              </>
+            )}
+
+            {unanswered.length === 0 && answered.length === 0 && (
+              <div style={{ padding: "16px 14px", fontSize: 12, color: "#b09080" }}>No open conversations</div>
+            )}
+
+            <div
+              onClick={() => setShowClosed(p => !p)}
+              style={{ padding: "10px 14px 6px", fontSize: 10, color: "#b09080", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 8, borderTop: "1px solid " + BORDER }}
+            >
+              Closed ({closed.length}) <span style={{ fontSize: 10 }}>{showClosed ? "▲" : "▼"}</span>
+            </div>
+            {showClosed && closed.map(c => <ConvoCard key={c.id} c={c} dimmed={true} />)}
           </div>
         </div>
 
