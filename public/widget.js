@@ -119,7 +119,7 @@
       cid = data[0].id;
       if (rem) { localStorage.setItem("ak_cid", cid); } else { sessionStorage.setItem("ak_cid", cid); }
       if (q) { await postMsg("visitor", q); }
-      await postMsg("agent", "Give me a minute!");
+      await postMsg("agent", "Give me a minute — or seven.");
       showChat(); startPoll();
     } catch(e) { console.error("Ask Kari error:", e); }
   });
@@ -154,7 +154,7 @@
       if (!body || !cid) return;
       inp.value = "";
       await postMsg("visitor", body);
-      await fetch(SURL + "/rest/v1/conversations?id=eq." + cid, { method: "PATCH", headers: H, body: JSON.stringify({ updated_at: new Date().toISOString() }) });
+      await fetch(SURL + "/rest/v1/conversations?id=eq." + cid, { method: "PATCH", headers: H, body: JSON.stringify({ updated_at: new Date().toISOString(), last_sender: "visitor" }) });
       loadMsgs();
     } catch(e) { console.error("Ask Kari send error:", e); }
   }
