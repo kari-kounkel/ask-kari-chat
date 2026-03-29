@@ -62,7 +62,7 @@ export default function AdminInbox({ agent, onLogout }) {
   };
 
   const closeConvo = async (id) => {
-    await supabase.from("conversations").update({ status: "closed" }).eq("id", id);
+    await supabase.from("conversations").update({ status: "closed", last_sender: "agent" }).eq("id", id);
     if (active?.id === id) setActive(null);
   };
 
