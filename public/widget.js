@@ -77,10 +77,10 @@
       "<textarea id='ak-q' rows='3' placeholder='What\u2019s your question or ask?'></textarea>",
       "<div id='ak-cb'>",
         "<strong>One quick thing (the fine print, but friendly):</strong>",
-        "I may turn great questions into content\u2014always stripped of identifying details.",
+        "I may turn great questions into content\u2014always stripped of identifying details unless you say otherwise.",
         "<div style='margin-top:8px;'>",
-          "<label class='ak-cbl'><input type='checkbox' id='ak-ok'/><span>I'm okay with that</span></label>",
-          "<label class='ak-cbl'><input type='checkbox' id='ak-named'/><span>Name me if you feature my question</span></label>",
+          "<label class='ak-cbl'><input type='checkbox' id='ak-named'/><span>Name me if you feature my question or topic</span></label>",
+          "<label class='ak-cbl'><input type='checkbox' id='ak-ok'/><span>I\u2019d prefer you didn\u2019t use this, even anonymously</span></label>",
         "</div>",
       "</div>",
       "<label id='ak-rem-row'><input type='checkbox' id='ak-rem' checked/> Remember my conversation on this device</label>",
@@ -88,6 +88,7 @@
     "</div>",
     "<div id='ak-msgs' style='display:none'></div>",
     "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
+    "<div id='ak-pdf-row' style='display:none;padding:6px 14px 10px;background:#fff;text-align:right;'><button id='ak-pdf' style='background:none;border:none;font-size:11px;color:#a07060;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline;'>⬇ Save this conversation as PDF</button></div>",
     "<div id='ak-reset'>Start a new conversation</div>"
   ].join("");
   document.body.appendChild(pan);
@@ -107,7 +108,7 @@
       if (!em) { err.style.display = "block"; return; }
       err.style.display = "none";
       var name = [fn, ln].filter(Boolean).join(" ") || "Friend";
-      var ok    = document.getElementById("ak-ok").checked;
+      var ok    = !document.getElementById("ak-ok").checked;
       var named = document.getElementById("ak-named").checked;
       var rem   = document.getElementById("ak-rem").checked;
       var res = await fetch(SURL + "/rest/v1/conversations", {
@@ -134,9 +135,49 @@
       document.getElementById("ak-intro").style.display = "flex";
       document.getElementById("ak-msgs").style.display = "none";
       document.getElementById("ak-foot").style.display = "none";
+      document.getElementById("ak-pdf-row").style.display = "none";
       document.getElementById("ak-reset").style.display = "none";
       document.getElementById("ak-msgs").innerHTML = "";
     }
+  });
+
+  document.getElementById("ak-pdf").addEventListener("click", function() {
+    var msgs = document.getElementById("ak-msgs").querySelectorAll(".ak-w");
+    var rows = Array.from(msgs).map(function(w) {
+      var isAgent = w.classList.contains("agent");
+      var body = w.querySelector(".ak-m") ? w.querySelector(".ak-m").textContent : "";
+      var time = w.querySelector(".ak-t") ? w.querySelector(".ak-t").textContent : "";
+      return "<div class='msg " + (isAgent ? "agent" : "visitor") + "'>" +
+        "<div class='bubble'>" + body.replace(/</g,"&lt;").replace(/>/g,"&gt;") + "</div>" +
+        "<div class='meta'>" + (isAgent ? "Kari" : "You") + " \u00b7 " + time + "</div></div>";
+    }).join("");
+    var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'/><title>Ask Kari \u2014 My Chat</title>" +
+      "<style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap');" +
+      "*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#fdf6f2;color:#2a1a10;padding:40px;max-width:680px;margin:0 auto;}" +
+      ".header{border-bottom:2px solid #e03820;padding-bottom:18px;margin-bottom:26px;}" +
+      ".logo{font-size:22px;font-weight:700;color:#e03820;}"+
+      ".tag{font-size:11px;color:#a07060;font-style:italic;margin-top:2px;}" +
+      ".printed{font-size:11px;color:#b09080;margin-top:10px;}" +
+      ".messages{display:flex;flex-direction:column;gap:14px;}" +
+      ".msg{display:flex;flex-direction:column;}" +
+      ".msg.visitor{align-items:flex-end;}.msg.agent{align-items:flex-start;}" +
+      ".bubble{max-width:75%;padding:10px 15px;border-radius:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}" +
+      ".visitor .bubble{background:linear-gradient(135deg,#e03820,#f07830);color:#fff;border-radius:14px 14px 4px 14px;}" +
+      ".agent .bubble{background:#fff;border:1.5px solid #e8cfc0;color:#2a1a10;border-radius:14px 14px 14px 4px;}" +
+      ".meta{font-size:10px;color:#b09080;margin-top:3px;padding:0 3px;}" +
+      ".footer{margin-top:32px;padding-top:14px;border-top:1px solid #e8cfc0;font-size:11px;color:#c0a090;text-align:center;}" +
+      "@media print{body{background:#fff;}.visitor .bubble{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>" +
+      "</head><body><div class='header'><div class='logo'>Ask Kari</div>" +
+      "<div class='tag'>Clarity with a side of mischief \u00b7 CARES Consulting Inc.</div>" +
+      "<div class='printed'>Saved: " + new Date().toLocaleString("en-US",{month:"long",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}) + "</div></div>" +
+      "<div class='messages'>" + rows + "</div>" +
+      "<div class='footer'>karikounkel.com \u00b7 Kari Hoglund Kounkel \u00b7 651-334-1300</div>" +
+      "</body></html>";
+    var win = window.open("","_blank");
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(function(){ win.print(); }, 600);
   });
 
   async function postMsg(sender, body) {
@@ -183,6 +224,7 @@
     document.getElementById("ak-intro").style.display = "none";
     document.getElementById("ak-msgs").style.display = "flex";
     document.getElementById("ak-foot").style.display = "flex";
+    document.getElementById("ak-pdf-row").style.display = "block";
     document.getElementById("ak-reset").style.display = "block";
     loadMsgs();
   }
