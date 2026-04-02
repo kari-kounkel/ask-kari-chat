@@ -1,6 +1,57 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 
+const printTranscript = (active, messages, siteTag, timeAgo) => {
+  const formatTime = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  const rows = messages.map(m => `
+    <div class="msg ${m.sender === "agent" ? "agent" : "visitor"}">
+      <div class="bubble">${m.body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+      <div class="meta">${m.sender === "agent" ? "Kari" : (active.visitor_name || "Visitor")} · ${formatTime(m.created_at)}</div>
+    </div>`).join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Ask Kari — Chat Transcript</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #fdf6f2; color: #2a1a10; padding: 40px; max-width: 700px; margin: 0 auto; }
+    .header { border-bottom: 2px solid #e03820; padding-bottom: 20px; margin-bottom: 28px; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 26px; color: #e03820; }
+    .tagline { font-size: 11px; color: #a07060; font-style: italic; margin-top: 2px; }
+    .meta-block { margin-top: 12px; font-size: 12px; color: #a07060; line-height: 1.8; }
+    .meta-block strong { color: #2a1a10; }
+    .messages { display: flex; flex-direction: column; gap: 16px; }
+    .msg { display: flex; flex-direction: column; }
+    .msg.agent { align-items: flex-end; }
+    .msg.visitor { align-items: flex-start; }
+    .bubble { max-width: 75%; padding: 10px 16px; border-radius: 14px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .agent .bubble { background: linear-gradient(135deg,#e03820,#f07830); color: #fff; border-radius: 16px 16px 4px 16px; }
+    .visitor .bubble { background: #fff; border: 1.5px solid #e8cfc0; color: #2a1a10; border-radius: 16px 16px 16px 4px; }
+    .meta { font-size: 11px; color: #b09080; margin-top: 4px; padding: 0 4px; }
+    .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid #e8cfc0; font-size: 11px; color: #c0a090; text-align: center; }
+    @media print { body { background: #fff; } .agent .bubble { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style></head><body>
+  <div class="header">
+    <div class="logo">Ask Kari</div>
+    <div class="tagline">Clarity with a side of mischief · CARES Consulting Inc.</div>
+    <div class="meta-block">
+      <strong>Visitor:</strong> ${active.visitor_name || "Anonymous"}<br/>
+      ${active.visitor_email ? `<strong>Email:</strong> ${active.visitor_email}<br/>` : ""}
+      <strong>Site:</strong> ${siteTag(active.site_origin)}<br/>
+      <strong>Printed:</strong> ${new Date().toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+    </div>
+  </div>
+  <div class="messages">${rows}</div>
+  <div class="footer">Ask Kari · karikounkel.com · Kari Hoglund Kounkel · 651-334-1300</div>
+  </body></html>`;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 600);
+};
+
 const RED = "#e03820";
 const AMBER = "#f07830";
 const GRAD = "linear-gradient(135deg," + RED + "," + AMBER + ")";
@@ -210,6 +261,7 @@ export default function AdminInbox({ agent, onLogout }) {
                 {consentLabel(active) && <div style={{ fontSize: 11, color: consentLabel(active).color, marginTop: 3, fontStyle: "italic" }}>{consentLabel(active).text}</div>}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => printTranscript(active, messages, siteTag, timeAgo)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid #c8e6c8", background: "transparent", color: "#5a9a5a", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>⬇ Save PDF</button>
                 {active.status === "open" && <button onClick={() => closeConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: "#a07060", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Close</button>}
                 {active.status === "closed" && <button onClick={() => reopenConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: AMBER, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Reopen</button>}
                 <button onClick={() => deleteConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid #f0c0b0", background: "transparent", color: RED, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Delete</button>
