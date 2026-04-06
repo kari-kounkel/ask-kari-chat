@@ -4,16 +4,91 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ask Kari</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
-      background: transparent;
-      overflow: hidden;
+      background: #fdf6f2;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      text-align: center;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 32px;
+      border: 2px solid #e8cfc0;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(42px, 8vw, 72px);
+      font-weight: 300;
+      color: #2a1a10;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+    .tagline {
+      font-size: 15px;
+      font-style: italic;
+      color: #a07060;
+      margin-bottom: 40px;
+    }
+    .prompt {
+      max-width: 480px;
+      font-size: 16px;
+      line-height: 1.8;
+      color: #5a3a28;
+      margin-bottom: 48px;
+    }
+    .cta {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-style: italic;
+      color: #e03820;
+      margin-bottom: 8px;
+    }
+    .arrow {
+      font-size: 28px;
+      color: #e03820;
+      animation: bounce 1.5s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+    .footer {
+      position: fixed;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #c0a090;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
   </style>
   <script src="https://chat.karikounkel.com/widget.js" defer></script>
 </head>
 <body>
+<div class="page">
+  <img class="logo" src="https://chat.karikounkel.com/AskKari.png" alt="Ask Kari"/>
+  <h1>Ask Kari.</h1>
+  <p class="tagline">Clarity with a side of mischief.</p>
+  <p class="prompt">Something stirred and you don't know what to do with it yet. A question you can't quite place. A thing you need to untangle. Drop it here. I read every one.</p>
+  <p class="cta">Tap the button below to start.</p>
+  <span class="arrow">↓</span>
+  <div class="footer">karikounkel.com · CARES Consulting Inc.</div>
+</div>
 </body>
 </html>
+
