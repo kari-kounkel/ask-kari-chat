@@ -88,7 +88,7 @@
     "</div>",
     "<div id='ak-msgs' style='display:none'></div>",
     "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
-    "<div id='ak-pdf-row' style='display:none;padding:6px 14px 10px;background:#fff;text-align:right;'><button id='ak-pdf' style='background:none;border:none;font-size:11px;color:#a07060;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline;'>⬇ Save this conversation as PDF</button></div>",
+    "<div id='ak-pdf-row' style='display:none;padding:6px 14px 10px;background:#fff;text-align:right;'><button id='ak-pdf' style='background:none;border:none;font-size:11px;color:#a07060;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline;'>\u2b07 Save this conversation as PDF</button></div>",
     "<div id='ak-reset'>Start a new conversation</div>"
   ].join("");
   document.body.appendChild(pan);
@@ -120,7 +120,7 @@
       cid = data[0].id;
       if (rem) { localStorage.setItem("ak_cid", cid); } else { sessionStorage.setItem("ak_cid", cid); }
       if (q) { await postMsg("visitor", q); }
-      await postMsg("agent", "Give me a minute — or seven.");
+      await postMsg("agent", "Give me a minute \u2014 or seven.");
       showChat(); startPoll();
     } catch(e) { console.error("Ask Kari error:", e); }
   });
@@ -171,7 +171,7 @@
       "<div class='tag'>Clarity with a side of mischief \u00b7 CARES Consulting Inc.</div>" +
       "<div class='printed'>Saved: " + new Date().toLocaleString("en-US",{month:"long",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}) + "</div></div>" +
       "<div class='messages'>" + rows + "</div>" +
-      "<div class='footer'>karikounkel.com \u00b7 Kari Hoglund Kounkel \u00b7 651-334-1300</div>" +
+      "<div class='footer'>Kari Hoglund Kounkel \u00b7 CARES Consulting Inc. \u00b7 K Co LLC \u00b7 Freedom Force Ltd</div>" +
       "</body></html>";
     var win = window.open("","_blank");
     win.document.write(html);
