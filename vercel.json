@@ -1,6 +1,6 @@
 {
   "routes": [
-    { "src": "/askkari", "dest": "/public/askkari.html" },
+    { "src": "/askkari", "dest": "/askkari.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
