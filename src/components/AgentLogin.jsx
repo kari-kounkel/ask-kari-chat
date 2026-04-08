@@ -37,8 +37,8 @@ export default function AgentLogin({ onLogin }) {
 
         {/* Logo block */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 90, height: 90, borderRadius: "50%", background: "radial-gradient(circle, #ffffff 55%, #fdf0ea 100%)", boxShadow: "0 0 22px rgba(224,56,32,0.14), 0 0 6px rgba(224,56,32,0.08)", marginBottom: 20 }}>
-            <img src="/AskKari.png" alt="Ask Kari" style={{ width: 60, height: 60, objectFit: "contain" }} />
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle, #ffffff 55%, #fdf0ea 100%)", boxShadow: "0 0 22px rgba(224,56,32,0.14), 0 0 6px rgba(224,56,32,0.08)", marginBottom: 20 }}>
+            <img src="/AskKari.png" alt="Ask Kari" style={{ width: 280, height: 280, objectFit: "contain" }} />
           </div>
           <div style={{ fontSize: 13, color: "#a07060", fontStyle: "italic" }}>Clarity with a side of mischief.</div>
         </div>
