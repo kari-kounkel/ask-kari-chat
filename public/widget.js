@@ -52,7 +52,11 @@
     "#ak-inp{flex:1;padding:10px 13px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}",
     "#ak-inp::placeholder{color:#c0a090;}",
     "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}",
-    "#ak-reset{text-align:center;padding:8px;background:#fff;border-top:1px solid #e8cfc0;font-size:11px;color:#b09080;cursor:pointer;display:none;}"
+    "#ak-reset{text-align:center;padding:8px;background:#fff;border-top:1px solid #e8cfc0;font-size:11px;color:#b09080;cursor:pointer;display:none;}",
+    "#ak-priority-bar{display:none;padding:10px 14px;background:#fff8f0;border-top:1.5px solid #f0d0b0;text-align:center;}",
+    "#ak-priority-bar a{display:inline-block;padding:8px 18px;background:linear-gradient(135deg,#C9A84C,#e0c060);border-radius:8px;color:#2a1a10;font-size:12px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif;}",
+    "#ak-priority-bar a:hover{opacity:0.88;}",
+    "#ak-priority-note{font-size:10px;color:#a07060;margin-top:5px;line-height:1.5;}"
   ].join("");
   document.head.appendChild(css);
 
@@ -89,6 +93,7 @@
     "<div id='ak-msgs' style='display:none'></div>",
     "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
     "<div id='ak-pdf-row' style='display:none;padding:6px 14px 10px;background:#fff;text-align:right;'><button id='ak-pdf' style='background:none;border:none;font-size:11px;color:#a07060;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline;'>\u2b07 Save this conversation as PDF</button></div>",
+    "<div id='ak-priority-bar'><a href='https://buy.stripe.com/bJebJ13x5epY9r5bqI18c05' target='_blank'>\u2b50 Priority Ask \u2014 $26</a><div id='ak-priority-note'>One thorough answer + one follow-up, delivered within 24\u201348 hours.<br/>For the question that actually needs a real answer.</div></div>",
     "<div id='ak-reset'>Start a new conversation</div>"
   ].join("");
   document.body.appendChild(pan);
@@ -225,6 +230,7 @@
     document.getElementById("ak-msgs").style.display = "flex";
     document.getElementById("ak-foot").style.display = "flex";
     document.getElementById("ak-pdf-row").style.display = "block";
+    document.getElementById("ak-priority-bar").style.display = "block";
     document.getElementById("ak-reset").style.display = "block";
     loadMsgs();
   }

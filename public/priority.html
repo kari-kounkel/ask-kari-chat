@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Priority Ask — Kari Hoglund Kounkel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#fdf6f2;color:#2a1a10;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;}
+.card{width:100%;max-width:560px;background:#fff;border:1.5px solid #e8cfc0;border-radius:24px;box-shadow:0 8px 40px rgba(224,56,32,0.09);overflow:hidden;}
+.card-head{background:linear-gradient(135deg,#e03820,#f07830);padding:28px 32px 24px;}
+.card-head img{width:52px;height:52px;border-radius:50%;object-fit:contain;background:rgba(255,255,255,0.15);margin-bottom:12px;display:block;}
+.card-head h1{font-family:'Playfair Display',serif;font-size:26px;color:#fff;line-height:1.2;}
+.card-head p{font-size:13px;color:rgba(255,255,255,0.85);margin-top:6px;font-style:italic;}
+.disclaimer{margin:24px 28px 0;background:#fff8f0;border:1.5px solid #f0d0b0;border-radius:12px;padding:14px 18px;font-size:13px;color:#7a4020;line-height:1.7;}
+.disclaimer strong{color:#e03820;display:block;margin-bottom:4px;font-size:13px;}
+.body{padding:24px 28px 32px;display:flex;flex-direction:column;gap:16px;}
+label{display:block;font-size:11px;color:#a07060;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px;}
+input,textarea,select{width:100%;padding:12px 15px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+input:focus,textarea:focus{border-color:#e03820;}
+input::placeholder,textarea::placeholder{color:#c0a090;}
+textarea{resize:vertical;line-height:1.6;}
+.row{display:flex;gap:12px;}
+.row > div{flex:1;min-width:0;}
+.upload-box{border:1.5px dashed #e8cfc0;border-radius:10px;padding:18px;text-align:center;background:#fdf6f2;cursor:pointer;transition:border-color 0.2s;}
+.upload-box:hover{border-color:#e03820;}
+.upload-box input{display:none;}
+.upload-label{font-size:13px;color:#a07060;}
+.upload-label span{color:#e03820;font-weight:600;cursor:pointer;}
+.upload-name{font-size:12px;color:#e03820;margin-top:6px;font-weight:600;}
+.btn{width:100%;padding:15px;background:linear-gradient(135deg,#e03820,#f07830);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 4px 18px rgba(224,56,32,0.22);transition:opacity 0.2s;}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+.success{display:none;flex-direction:column;align-items:center;gap:14px;padding:40px 28px;text-align:center;}
+.success-icon{font-size:48px;}
+.success h2{font-family:'Playfair Display',serif;font-size:24px;color:#2a1a10;}
+.success p{font-size:14px;color:#a07060;line-height:1.7;max-width:400px;}
+.err{font-size:12px;color:#e03820;margin-top:-8px;display:none;}
+</style>
+</head>
+<body>
+
+<div class="card" id="form-card">
+  <div class="card-head">
+    <img src="https://chat.karikounkel.com/AskKari.png" alt="Ask Kari"/>
+    <h1>You're in. Let's go deep.</h1>
+    <p>Payment confirmed — now give me the real question.</p>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⭐ Here's what $26 gets you:</strong>
+    $26 gets you clarity, not a consultant on call. One question answered thoroughly, one follow-up exchange included. For ongoing work, let's talk. Kari will respond within 24–48 hours to the email you provide below.
+  </div>
+
+  <div class="body">
+    <div class="row">
+      <div>
+        <label>First Name</label>
+        <input id="fn" placeholder="First name" required/>
+      </div>
+      <div>
+        <label>Last Name</label>
+        <input id="ln" placeholder="Last name"/>
+      </div>
+    </div>
+
+    <div>
+      <label>Email — this is where Kari replies</label>
+      <input id="em" type="email" placeholder="your@email.com" required/>
+      <div class="err" id="em-err">Email is required — Kari needs a way to reach you.</div>
+    </div>
+
+    <div>
+      <label>Your Question — the real one, with context</label>
+      <textarea id="q" rows="6" placeholder="Don't be shy. The more context you give, the more useful my answer. What's actually going on?"></textarea>
+      <div class="err" id="q-err">Please share your question so Kari can actually help.</div>
+    </div>
+
+    <div>
+      <label>Attach a Document (optional)</label>
+      <div class="upload-box" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg"/>
+        <div class="upload-label">Drop a file or <span>browse</span> — contracts, spreadsheets, screenshots, whatever helps</div>
+        <div class="upload-name" id="file-name"></div>
+      </div>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitPriority()">Send My Priority Ask →</button>
+  </div>
+</div>
+
+<div class="card" id="success-card" style="display:none;">
+  <div class="success" style="display:flex;">
+    <div class="success-icon">⭐</div>
+    <h2>Got it. Kari's on it.</h2>
+    <p>Your priority question is in. Kari will reply to <strong id="confirm-email"></strong> within 24–48 hours with a thorough, tailored response. You'll have one follow-up exchange included.</p>
+    <p style="font-size:13px;color:#b09080;font-style:italic;">Now go sparkle. That's an order.</p>
+  </div>
+</div>
+
+<script>
+var SURL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
+var SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
+var H = {"Content-Type":"application/json","apikey":SKEY,"Authorization":"Bearer "+SKEY};
+
+document.getElementById("file-input").addEventListener("change", function() {
+  var f = this.files[0];
+  document.getElementById("file-name").textContent = f ? "📎 " + f.name : "";
+});
+
+async function uploadFile(file, convId) {
+  if (!file) return null;
+  var ext = file.name.split(".").pop();
+  var path = "priority/" + convId + "/" + Date.now() + "." + ext;
+  var res = await fetch(SURL + "/storage/v1/object/flowsuite-files/" + path, {
+    method: "POST",
+    headers: {"apikey": SKEY, "Authorization": "Bearer " + SKEY, "Content-Type": file.type},
+    body: file
+  });
+  if (!res.ok) return null;
+  return SURL + "/storage/v1/object/public/flowsuite-files/" + path;
+}
+
+async function submitPriority() {
+  var fn = (document.getElementById("fn").value || "").trim();
+  var ln = (document.getElementById("ln").value || "").trim();
+  var em = (document.getElementById("em").value || "").trim();
+  var q  = (document.getElementById("q").value  || "").trim();
+  var file = document.getElementById("file-input").files[0];
+
+  document.getElementById("em-err").style.display = "none";
+  document.getElementById("q-err").style.display  = "none";
+
+  var valid = true;
+  if (!em) { document.getElementById("em-err").style.display = "block"; valid = false; }
+  if (!q)  { document.getElementById("q-err").style.display  = "block"; valid = false; }
+  if (!valid) return;
+
+  var btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  try {
+    var name = [fn, ln].filter(Boolean).join(" ") || "Friend";
+
+    // Create conversation
+    var res = await fetch(SURL + "/rest/v1/conversations", {
+      method: "POST",
+      headers: Object.assign({}, H, {"Prefer": "return=representation"}),
+      body: JSON.stringify({
+        visitor_id: "priority_" + Date.now(),
+        visitor_name: name,
+        visitor_email: em,
+        site_origin: window.location.origin,
+        status: "open",
+        type: "priority",
+        last_sender: "visitor"
+      })
+    });
+    var data = await res.json();
+    var convId = data[0].id;
+
+    // Upload file if present
+    var attachUrl = await uploadFile(file, convId);
+
+    // Post their question as a message
+    var msgBody = q + (attachUrl ? "\n\n📎 Attachment: " + attachUrl : "");
+    await fetch(SURL + "/rest/v1/messages", {
+      method: "POST",
+      headers: Object.assign({}, H, {"Prefer": "return=minimal"}),
+      body: JSON.stringify({conversation_id: convId, sender: "visitor", body: msgBody})
+    });
+
+    // Update with attachment url if present
+    if (attachUrl) {
+      await fetch(SURL + "/rest/v1/conversations?id=eq." + convId, {
+        method: "PATCH",
+        headers: H,
+        body: JSON.stringify({attachment_url: attachUrl})
+      });
+    }
+
+    // Show success
+    document.getElementById("confirm-email").textContent = em;
+    document.getElementById("form-card").style.display = "none";
+    document.getElementById("success-card").style.display = "block";
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "Send My Priority Ask →";
+    alert("Something went sideways. Try again or email kari@karikounkel.com directly.");
+    console.error(e);
+  }
+}
+</script>
+<script src="https://chat.karikounkel.com/widget.js" defer></script>
+</body>
+</html>

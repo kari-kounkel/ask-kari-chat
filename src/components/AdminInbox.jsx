@@ -75,6 +75,9 @@ export default function AdminInbox({ agent, onLogout }) {
   const [search, setSearch] = useState("");
   const [sortIdx, setSortIdx] = useState(0);
   const [showClosed, setShowClosed] = useState(false);
+  const [tab, setTab] = useState("inbox");
+  const [priorityResponse, setPriorityResponse] = useState("");
+  const [loomUrl, setLoomUrl] = useState("");
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -158,9 +161,13 @@ export default function AdminInbox({ agent, onLogout }) {
     })
     .sort(SORTS[sortIdx].fn);
 
-  const unanswered = filtered.filter(c => c.status === "open" && c.last_sender === "visitor");
-  const answered = filtered.filter(c => c.status === "open" && c.last_sender !== "visitor");
-  const closed = filtered.filter(c => c.status === "closed");
+  const freeConvos = filtered.filter(c => c.type !== "priority");
+  const priorityConvos = filtered.filter(c => c.type === "priority");
+  const unanswered = freeConvos.filter(c => c.status === "open" && c.last_sender === "visitor");
+  const answered = freeConvos.filter(c => c.status === "open" && c.last_sender !== "visitor");
+  const closed = freeConvos.filter(c => c.status === "closed");
+  const priorityOpen = priorityConvos.filter(c => c.status === "open");
+  const priorityClosed = priorityConvos.filter(c => c.status === "closed");
 
   const SectionLabel = ({ label, count, color }) => (
     <div style={{ padding: "10px 14px 6px", fontSize: 10, color: color || AMBER, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
@@ -203,8 +210,150 @@ export default function AdminInbox({ agent, onLogout }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", height: "calc(100vh - 57px)" }}>
+      <div style={{ background: GRAD, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(224,56,32,0.15)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <img src="/AskKari-white.png" alt="Ask Kari" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "contain", background: "rgba(255,255,255,0.15)" }} />
+          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "#fff" }}>Ask Kari — Inbox</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", gap: 4, background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: 4 }}>
+            <button onClick={() => { setTab("inbox"); setActive(null); }} style={{ padding: "6px 16px", borderRadius: 7, border: "none", background: tab === "inbox" ? "#fff" : "transparent", color: tab === "inbox" ? RED : "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}>Inbox</button>
+            <button onClick={() => { setTab("priority"); setActive(null); setPriorityResponse(""); setLoomUrl(""); }} style={{ padding: "6px 16px", borderRadius: 7, border: "none", background: tab === "priority" ? "#fff" : "transparent", color: tab === "priority" ? "#C9A84C" : "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 5 }}>
+              ⭐ Priority {priorityOpen.length > 0 && <span style={{ background: "#C9A84C", color: "#fff", borderRadius: 10, padding: "1px 7px", fontSize: 10 }}>{priorityOpen.length}</span>}
+            </button>
+          </div>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{agent.email}</span>
+          <button onClick={onLogout} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "#fff", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Log out</button>
+        </div>
+      </div>
 
+      {tab === "priority" ? (
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", height: "calc(100vh - 57px)" }}>
+          <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, display: "flex", flexDirection: "column", flexShrink: 0 }}>
+            <div style={{ padding: "12px 14px 8px", borderBottom: "1px solid " + BORDER }}>
+              <div style={{ fontSize: 10, color: "#C9A84C", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Priority Queue</div>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              {priorityOpen.length === 0 && <div style={{ padding: "16px 14px", fontSize: 12, color: "#b09080" }}>No open priority asks</div>}
+              {priorityOpen.map(c => (
+                <div key={c.id} onClick={() => { setActive(c); setPriorityResponse(c.agent_response || ""); setLoomUrl(c.loom_url || ""); }}
+                  style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, cursor: "pointer", background: active?.id === c.id ? "#fff8f0" : "transparent", borderLeft: active?.id === c.id ? "3px solid #C9A84C" : "3px solid transparent" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#2a1a10" }}>{c.visitor_name || "Visitor"}</span>
+                    <span style={{ fontSize: 10, color: "#b09080" }}>{timeAgo(c.updated_at)}</span>
+                  </div>
+                  {c.visitor_email && <div style={{ fontSize: 11, color: "#a07060" }}>{c.visitor_email}</div>}
+                  <div style={{ fontSize: 10, color: "#C9A84C", fontWeight: 700, marginTop: 3 }}>⭐ Priority · $26 paid</div>
+                </div>
+              ))}
+              {priorityClosed.length > 0 && (
+                <>
+                  <div style={{ padding: "10px 14px 6px", fontSize: 10, color: "#b09080", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, borderTop: "1px solid " + BORDER, marginTop: 8 }}>Completed ({priorityClosed.length})</div>
+                  {priorityClosed.map(c => (
+                    <div key={c.id} onClick={() => { setActive(c); setPriorityResponse(c.agent_response || ""); setLoomUrl(c.loom_url || ""); }}
+                      style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, cursor: "pointer", opacity: 0.6, background: active?.id === c.id ? "#fff8f0" : "transparent" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#2a1a10" }}>{c.visitor_name || "Visitor"}</div>
+                      {c.visitor_email && <div style={{ fontSize: 11, color: "#a07060" }}>{c.visitor_email}</div>}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+
+          {!active ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#b09080", fontSize: 15 }}>Select a priority ask to respond</div>
+          ) : (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ padding: "16px 24px", borderBottom: "1.5px solid " + BORDER, background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#2a1a10" }}>{active.visitor_name || "Visitor"}</span>
+                    <span style={{ fontSize: 11, background: "#fff8e0", border: "1px solid #e0c060", borderRadius: 6, padding: "2px 8px", color: "#C9A84C", fontWeight: 700 }}>⭐ Priority</span>
+                  </div>
+                  {active.visitor_email && <div style={{ fontSize: 12, color: "#a07060", marginTop: 2 }}>{active.visitor_email}</div>}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {active.status === "open" && <button onClick={() => closeConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: "#a07060", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Mark Complete</button>}
+                  {active.status === "closed" && <button onClick={() => reopenConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid " + BORDER, background: "transparent", color: AMBER, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Reopen</button>}
+                  <button onClick={() => deleteConvo(active.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid #f0c0b0", background: "transparent", color: RED, fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Delete</button>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: SOFT }}>
+                <div style={{ background: "#fff", border: "1.5px solid #e8cfc0", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Their Question</div>
+                  <div style={{ fontSize: 14, color: "#2a1a10", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                    {messages.filter(m => m.sender === "visitor").map(m => m.body).join("\n\n") || "Loading..."}
+                  </div>
+                  {active.attachment_url && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid " + BORDER }}>
+                      <a href={active.attachment_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: RED, textDecoration: "none", fontWeight: 600 }}>📎 View Attachment →</a>
+                    </div>
+                  )}
+                </div>
+
+                {active.status === "open" && (
+                  <div style={{ background: "#fff", border: "1.5px solid #e8cfc0", borderRadius: 14, padding: "16px 20px" }}>
+                    <div style={{ fontSize: 11, color: "#a07060", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>Your Response</div>
+
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ display: "block", fontSize: 11, color: "#a07060", marginBottom: 6 }}>LOOM / VIDEO LINK (optional)</label>
+                      <input
+                        value={loomUrl}
+                        onChange={e => setLoomUrl(e.target.value)}
+                        placeholder="https://loom.com/share/..."
+                        style={{ width: "100%", padding: "10px 14px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 8, color: "#2a1a10", fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: "none", boxSizing: "border-box" }}
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: "block", fontSize: 11, color: "#a07060", marginBottom: 6 }}>WRITTEN RESPONSE</label>
+                      <textarea
+                        value={priorityResponse}
+                        onChange={e => setPriorityResponse(e.target.value)}
+                        placeholder="Type your thorough, tailored response here. This is the good stuff."
+                        rows={8}
+                        style={{ width: "100%", padding: "12px 14px", background: SOFT, border: "1.5px solid " + BORDER, borderRadius: 8, color: "#2a1a10", fontSize: 14, fontFamily: "'DM Sans',sans-serif", outline: "none", resize: "vertical", lineHeight: 1.6, boxSizing: "border-box" }}
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (!priorityResponse.trim() && !loomUrl.trim()) return;
+                        await supabase.from("conversations").update({ agent_response: priorityResponse, loom_url: loomUrl, updated_at: new Date().toISOString() }).eq("id", active.id);
+                        var subject = encodeURIComponent("Your Priority Ask Kari Response");
+                        var body = encodeURIComponent(
+                          "Hi " + (active.visitor_name || "there") + ",\n\nThank you for your Priority Ask. Here's my response:\n\n" +
+                          (loomUrl ? "VIDEO RESPONSE: " + loomUrl + "\n\n" : "") +
+                          (priorityResponse ? priorityResponse + "\n\n" : "") +
+                          "You have one follow-up exchange included. Just reply to this email.\n\n" +
+                          "Now go sparkle. That's an order.\n\nKari\nkari@karikounkel.com\n651-334-1300"
+                        );
+                        window.open("mailto:" + active.visitor_email + "?subject=" + subject + "&body=" + body);
+                      }}
+                      disabled={!priorityResponse.trim() && !loomUrl.trim()}
+                      style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#C9A84C,#e0c060)", border: "none", borderRadius: 10, color: "#2a1a10", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: (!priorityResponse.trim() && !loomUrl.trim()) ? 0.5 : 1 }}
+                    >
+                      ⭐ Open in Email & Send →
+                    </button>
+                    <div style={{ fontSize: 11, color: "#b09080", textAlign: "center", marginTop: 8 }}>Opens your email client with everything pre-filled. Hit send, then mark complete.</div>
+                  </div>
+                )}
+
+                {active.status === "closed" && active.agent_response && (
+                  <div style={{ background: "#fff", border: "1.5px solid #e8cfc0", borderRadius: 14, padding: "16px 20px" }}>
+                    <div style={{ fontSize: 11, color: "#7ab87a", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>✓ Response Sent</div>
+                    {active.loom_url && <div style={{ fontSize: 13, color: RED, marginBottom: 8 }}>🎥 <a href={active.loom_url} target="_blank" rel="noreferrer" style={{ color: RED }}>Loom Link</a></div>}
+                    <div style={{ fontSize: 14, color: "#2a1a10", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{active.agent_response}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", height: "calc(100vh - 57px)" }}>
         <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, display: "flex", flexDirection: "column", flexShrink: 0 }}>
           <div style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, display: "flex", flexDirection: "column", gap: 8 }}>
             <input
@@ -295,7 +444,8 @@ export default function AdminInbox({ agent, onLogout }) {
             )}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
