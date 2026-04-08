@@ -221,7 +221,7 @@ export default function AdminInbox({ agent, onLogout }) {
           <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, display: "flex", flexDirection: "column", flexShrink: 0 }}>
             <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid " + BORDER }}>
               <div style={{ fontSize: 10, color: "#C9A84C", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 10 }}>Priority Queue</div>
-              <a href="https://dashboard.stripe.com/payment-links" target="_blank" rel="noreferrer"
+              <a href="https://dashboard.stripe.com/acct_1RViqWEOQJdY217b/payments" target="_blank" rel="noreferrer"
                 style={{ display: "block", textAlign: "center", padding: "7px 12px", background: "#f0fff0", border: "1.5px solid #c8e6c8", borderRadius: 8, color: "#5a9a5a", fontSize: 11, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>
                 ✓ Verify Payment in Stripe →
               </a>
