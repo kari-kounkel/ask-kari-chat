@@ -205,17 +205,6 @@ export default function AdminInbox({ agent, onLogout }) {
           <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "#fff" }}>Ask Kari — Inbox</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{agent.email}</span>
-          <button onClick={onLogout} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "#fff", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Log out</button>
-        </div>
-      </div>
-
-      <div style={{ background: GRAD, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(224,56,32,0.15)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img src="/AskKari-white.png" alt="Ask Kari" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "contain", background: "rgba(255,255,255,0.15)" }} />
-          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "#fff" }}>Ask Kari — Inbox</div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", gap: 4, background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: 4 }}>
             <button onClick={() => { setTab("inbox"); setActive(null); }} style={{ padding: "6px 16px", borderRadius: 7, border: "none", background: tab === "inbox" ? "#fff" : "transparent", color: tab === "inbox" ? RED : "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}>Inbox</button>
             <button onClick={() => { setTab("priority"); setActive(null); setPriorityResponse(""); setLoomUrl(""); }} style={{ padding: "6px 16px", borderRadius: 7, border: "none", background: tab === "priority" ? "#fff" : "transparent", color: tab === "priority" ? "#C9A84C" : "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 5 }}>
@@ -330,7 +319,7 @@ export default function AdminInbox({ agent, onLogout }) {
                           "You have one follow-up exchange included. Just reply to this email.\n\n" +
                           "Now go sparkle. That's an order.\n\nKari\nkari@karikounkel.com\n651-334-1300"
                         );
-                        window.open("mailto:" + active.visitor_email + "?subject=" + subject + "&body=" + body);
+                        window.open("https://mail.google.com/mail/?view=cm&to=" + encodeURIComponent(active.visitor_email) + "&su=" + subject + "&body=" + body);
                       }}
                       disabled={!priorityResponse.trim() && !loomUrl.trim()}
                       style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#C9A84C,#e0c060)", border: "none", borderRadius: 10, color: "#2a1a10", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: (!priorityResponse.trim() && !loomUrl.trim()) ? 0.5 : 1 }}
