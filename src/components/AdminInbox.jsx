@@ -219,8 +219,19 @@ export default function AdminInbox({ agent, onLogout }) {
       {tab === "priority" ? (
         <div style={{ display: "flex", flex: 1, overflow: "hidden", height: "calc(100vh - 57px)" }}>
           <div style={{ width: 300, background: "#fff", borderRight: "1.5px solid " + BORDER, display: "flex", flexDirection: "column", flexShrink: 0 }}>
-            <div style={{ padding: "12px 14px 8px", borderBottom: "1px solid " + BORDER }}>
-              <div style={{ fontSize: 10, color: "#C9A84C", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Priority Queue</div>
+            <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid " + BORDER }}>
+              <div style={{ fontSize: 10, color: "#C9A84C", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 10 }}>Priority Queue</div>
+              <a href="https://dashboard.stripe.com/payment-links" target="_blank" rel="noreferrer"
+                style={{ display: "block", textAlign: "center", padding: "7px 12px", background: "#f0fff0", border: "1.5px solid #c8e6c8", borderRadius: 8, color: "#5a9a5a", fontSize: 11, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>
+                ✓ Verify Payment in Stripe →
+              </a>
+              <div style={{ background: "#fff8e0", border: "1.5px solid #e8d080", borderRadius: 8, padding: "8px 12px" }}>
+                <div style={{ fontSize: 10, color: "#a07020", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Free Access Code</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ flex: 1, fontSize: 12, color: "#2a1a10", fontWeight: 600, fontFamily: "monospace", background: "#fff", border: "1px solid #e0d090", borderRadius: 6, padding: "4px 8px" }}>testing-karikounkel-free</span>
+                  <button onClick={() => { navigator.clipboard.writeText("testing-karikounkel-free"); }} style={{ padding: "4px 10px", background: "linear-gradient(135deg,#C9A84C,#e0c060)", border: "none", borderRadius: 6, color: "#2a1a10", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>Copy</button>
+                </div>
+              </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto" }}>
               {priorityOpen.length === 0 && <div style={{ padding: "16px 14px", fontSize: 12, color: "#b09080" }}>No open priority asks</div>}
