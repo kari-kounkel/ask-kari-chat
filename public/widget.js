@@ -79,7 +79,7 @@
   pan.innerHTML = [
     "<div id='ak-hdr'>",
       "<img src='" + LOGO_W + "' alt='Ask Kari'/>",
-      "<div id='ak-hdr-txt'><div id='ak-title'>Ask Kari</div><div id='ak-sub'>Clarity with a side of mischief</div></div>",
+      "<div id='ak-hdr-txt'><div id='ak-title'>" + (SUPPORT ? "Need a hand?" : "Ask Kari") + "</div><div id='ak-sub'>" + (SUPPORT ? "Drop a note — we’re on it" : "Clarity with a side of mischief") + "</div></div>",
       "<button id='ak-x'>x</button>",
     "</div>",
     "<div id='ak-intro'>",
