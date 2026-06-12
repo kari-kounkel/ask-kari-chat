@@ -10,6 +10,12 @@
   var cid = localStorage.getItem("ak_cid") || null;
   var poll = null; var lastCount = 0;
 
+  // Support mode: set window.AskKariConfig = { mode:"support", site:"FlowSuite Pro", user:"Jane Doe" }
+  // before loading this script. Lite "get in touch" flow — no email gate.
+  var CFG = window.AskKariConfig || {};
+  var SUPPORT = CFG.mode === "support";
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
   var css = document.createElement("style");
   css.textContent = [
     "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');",
@@ -27,6 +33,7 @@
     "#ak-intro{padding:20px;display:flex;flex-direction:column;gap:10px;background:#fff;overflow-y:auto;}",
     "#ak-intro h3{margin:0;font-size:15px;font-weight:700;color:#2a1a10;}",
     "#ak-intro p{margin:0;font-size:12px;color:#a07060;}",
+    "#ak-ctx{font-size:11px;color:#6a4030;background:#fdf6f2;border:1px solid #e8cfc0;border-radius:8px;padding:7px 11px;}",
     ".ak-row{display:flex;gap:8px;}",
     ".ak-row input{flex:1;min-width:0;}",
     "#ak-intro input,#ak-intro textarea{width:100%;padding:10px 13px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;}",
@@ -73,22 +80,33 @@
       "<button id='ak-x'>x</button>",
     "</div>",
     "<div id='ak-intro'>",
-      "<h3>Let\u2019s untangle this.</h3>",
-      "<p>I read every one. Drop your info\u2014I\u2019ll get back to you.</p>",
-      "<div class='ak-row'><input id='ak-fn' placeholder='First name'/><input id='ak-ln' placeholder='Last name'/></div>",
-      "<input id='ak-em' type='email' placeholder='Email address (required)'/>",
-      "<div id='ak-err'>Email is required \u2014 I need a way to reach you back.</div>",
-      "<textarea id='ak-q' rows='3' placeholder='What\u2019s your question or ask?'></textarea>",
-      "<div id='ak-cb'>",
-        "<strong>One quick thing (the fine print, but friendly):</strong>",
-        "I may turn great questions into content\u2014always stripped of identifying details unless you say otherwise.",
-        "<div style='margin-top:8px;'>",
-          "<label class='ak-cbl'><input type='checkbox' id='ak-named'/><span>Name me if you feature my question or topic</span></label>",
-          "<label class='ak-cbl'><input type='checkbox' id='ak-ok'/><span>I\u2019d prefer you didn\u2019t use this, even anonymously</span></label>",
-        "</div>",
-      "</div>",
-      "<label id='ak-rem-row'><input type='checkbox' id='ak-rem' checked/> Remember my conversation on this device</label>",
-      "<button id='ak-go'>Let\u2019s do this \u2192</button>",
+      (SUPPORT
+        ? [
+            "<h3>Need a hand?</h3>",
+            "<p>Tell me what\u2019s going on \u2014 it goes straight to my queue.</p>",
+            ((CFG.user || CFG.site) ? "<div id='ak-ctx'>" + (CFG.user ? "<b>" + esc(CFG.user) + "</b>" : "") + (CFG.site ? ((CFG.user ? " \u00b7 " : "") + esc(CFG.site)) : "") + "</div>" : ""),
+            "<textarea id='ak-q' rows='4' placeholder='What do you need help with?'></textarea>",
+            "<div id='ak-err'>Type your question first.</div>",
+            "<button id='ak-go'>Send to queue \u2192</button>"
+          ].join("")
+        : [
+            "<h3>Let\u2019s untangle this.</h3>",
+            "<p>I read every one. Drop your info\u2014I\u2019ll get back to you.</p>",
+            "<div class='ak-row'><input id='ak-fn' placeholder='First name'/><input id='ak-ln' placeholder='Last name'/></div>",
+            "<input id='ak-em' type='email' placeholder='Email address (required)'/>",
+            "<div id='ak-err'>Email is required \u2014 I need a way to reach you back.</div>",
+            "<textarea id='ak-q' rows='3' placeholder='What\u2019s your question or ask?'></textarea>",
+            "<div id='ak-cb'>",
+              "<strong>One quick thing (the fine print, but friendly):</strong>",
+              "I may turn great questions into content\u2014always stripped of identifying details unless you say otherwise.",
+              "<div style='margin-top:8px;'>",
+                "<label class='ak-cbl'><input type='checkbox' id='ak-named'/><span>Name me if you feature my question or topic</span></label>",
+                "<label class='ak-cbl'><input type='checkbox' id='ak-ok'/><span>I\u2019d prefer you didn\u2019t use this, even anonymously</span></label>",
+              "</div>",
+            "</div>",
+            "<label id='ak-rem-row'><input type='checkbox' id='ak-rem' checked/> Remember my conversation on this device</label>",
+            "<button id='ak-go'>Let\u2019s do this \u2192</button>"
+          ].join("")),
     "</div>",
     "<div id='ak-msgs' style='display:none'></div>",
     "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
@@ -105,6 +123,24 @@
 
   document.getElementById("ak-go").addEventListener("click", async function() {
     try {
+      if (SUPPORT) {
+        var sq = (document.getElementById("ak-q").value || "").trim();
+        var serr = document.getElementById("ak-err");
+        if (!sq) { serr.style.display = "block"; return; }
+        serr.style.display = "none";
+        var sres = await fetch(SURL + "/rest/v1/conversations", {
+          method: "POST",
+          headers: Object.assign({}, H, { "Prefer": "return=representation" }),
+          body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: CFG.user || "Guest", visitor_email: null, site_origin: CFG.site || window.location.origin, type: "support", status: "open" })
+        });
+        var sdata = await sres.json();
+        cid = sdata[0].id;
+        localStorage.setItem("ak_cid", cid);
+        await postMsg("visitor", sq);
+        await postMsg("agent", "You’re in the queue — I’ll reply right here. ⏳");
+        showChat(); startPoll();
+        return;
+      }
       var fn = (document.getElementById("ak-fn").value || "").trim();
       var ln = (document.getElementById("ak-ln").value || "").trim();
       var em = (document.getElementById("ak-em").value || "").trim();
@@ -230,7 +266,7 @@
     document.getElementById("ak-msgs").style.display = "flex";
     document.getElementById("ak-foot").style.display = "flex";
     document.getElementById("ak-pdf-row").style.display = "block";
-    document.getElementById("ak-priority-bar").style.display = "block";
+    if (!SUPPORT) document.getElementById("ak-priority-bar").style.display = "block";
     document.getElementById("ak-reset").style.display = "block";
     loadMsgs();
   }
