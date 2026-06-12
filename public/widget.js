@@ -59,6 +59,9 @@
     "#ak-inp{flex:1;padding:10px 13px;background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;color:#2a1a10;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}",
     "#ak-inp::placeholder{color:#c0a090;}",
     "#ak-send{padding:0 18px;background:" + GRAD + ";border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}",
+    "#ak-clip{background:#fdf6f2;border:1.5px solid #e8cfc0;border-radius:10px;padding:0 11px;font-size:16px;cursor:pointer;line-height:1;}",
+    ".ak-m img{max-width:210px;border-radius:10px;display:block;margin-top:2px;cursor:pointer;}",
+    "#ak-upnote{font-size:10px;color:#b09080;padding:3px 14px 0;text-align:center;display:none;}",
     "#ak-reset{text-align:center;padding:8px;background:#fff;border-top:1px solid #e8cfc0;font-size:11px;color:#b09080;cursor:pointer;display:none;}",
     "#ak-priority-bar{display:none;padding:10px 14px;background:#fff8f0;border-top:1.5px solid #f0d0b0;text-align:center;}",
     "#ak-priority-bar a{display:inline-block;padding:8px 18px;background:linear-gradient(135deg,#C9A84C,#e0c060);border-radius:8px;color:#2a1a10;font-size:12px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif;}",
@@ -109,7 +112,8 @@
           ].join("")),
     "</div>",
     "<div id='ak-msgs' style='display:none'></div>",
-    "<div id='ak-foot' style='display:none'><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
+    "<div id='ak-foot' style='display:none'><button id='ak-clip' title='Attach a screenshot'>📎</button><input id='ak-file' type='file' accept='image/*' style='display:none'/><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
+    "<div id='ak-upnote'></div>",
     "<div id='ak-pdf-row' style='display:none;padding:6px 14px 10px;background:#fff;text-align:right;'><button id='ak-pdf' style='background:none;border:none;font-size:11px;color:#a07060;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline;'>\u2b07 Save this conversation as PDF</button></div>",
     "<div id='ak-priority-bar'><a href='https://buy.stripe.com/bJebJ13x5epY9r5bqI18c05' target='_blank'>\u2b50 Priority Ask \u2014 $26</a><div id='ak-priority-note'>One thorough answer + one follow-up, delivered within 24\u201348 hours.<br/>For the question that actually needs a real answer.</div></div>",
     "<div id='ak-reset'>Start a new conversation</div>"
@@ -137,7 +141,7 @@
         cid = sdata[0].id;
         localStorage.setItem("ak_cid", cid);
         await postMsg("visitor", sq);
-        await postMsg("agent", "You’re in the queue — I’ll reply right here. ⏳");
+        await postMsg("agent", "You’re in the queue — I’ll reply right here. ⏳\n\nNeed to show me something? Tap 📎 to attach a screenshot. Grab one with Win+Shift+S (Windows) or Cmd+Shift+4 (Mac), then paste or attach it here.");
         showChat(); startPoll();
         return;
       }
@@ -168,6 +172,33 @@
 
   document.getElementById("ak-send").addEventListener("click", sendMsg);
   document.getElementById("ak-inp").addEventListener("keydown", function(e) { if (e.key === "Enter") sendMsg(); });
+
+  document.getElementById("ak-clip").addEventListener("click", function() { document.getElementById("ak-file").click(); });
+  document.getElementById("ak-file").addEventListener("change", function(e) { if (e.target.files && e.target.files[0]) uploadFile(e.target.files[0]); e.target.value = ""; });
+  document.getElementById("ak-inp").addEventListener("paste", function(e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf("image") === 0) { var f = items[i].getAsFile(); if (f) { e.preventDefault(); uploadFile(f); } }
+    }
+  });
+  async function uploadFile(file) {
+    if (!file || !cid || !/^image\//.test(file.type)) return;
+    var note = document.getElementById("ak-upnote");
+    if (note) { note.textContent = "Uploading screenshot…"; note.style.display = "block"; }
+    try {
+      var ext = ((file.name || "shot.png").split(".").pop() || "png").toLowerCase();
+      var path = cid + "/" + Date.now() + "." + ext;
+      var up = await fetch(SURL + "/storage/v1/object/support-files/" + path, {
+        method: "POST",
+        headers: { "apikey": SKEY, "Authorization": "Bearer " + SKEY, "Content-Type": file.type, "x-upsert": "true" },
+        body: file
+      });
+      if (!up.ok) throw new Error("upload " + up.status);
+      await postMsg("visitor", SURL + "/storage/v1/object/public/support-files/" + path);
+      loadMsgs();
+    } catch (err) { console.error("Ask Kari upload error:", err); if (note) note.textContent = "Couldn’t upload that — try again?"; }
+    if (note) setTimeout(function() { note.style.display = "none"; }, 1200);
+  }
   document.getElementById("ak-reset").addEventListener("click", function() {
     if (confirm("Start a new conversation? Your history stays on file.")) {
       localStorage.removeItem("ak_cid"); sessionStorage.removeItem("ak_cid");
@@ -252,7 +283,12 @@
       c.innerHTML = "";
       msgs.forEach(function(m) {
         var w = document.createElement("div"); w.className = "ak-w " + m.sender;
-        var b = document.createElement("div"); b.className = "ak-m " + m.sender; b.textContent = m.body;
+        var b = document.createElement("div"); b.className = "ak-m " + m.sender;
+        if (/^https?:\/\/.*(\/support-files\/|\.(png|jpe?g|gif|webp))(\?|$)/i.test(m.body)) {
+          var im = document.createElement("img"); im.src = m.body; im.alt = "attachment";
+          im.addEventListener("click", function() { window.open(this.src, "_blank"); });
+          b.appendChild(im);
+        } else { b.textContent = m.body; }
         var t = document.createElement("div"); t.className = "ak-t";
         t.textContent = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         w.appendChild(b); w.appendChild(t); c.appendChild(w);
