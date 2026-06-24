@@ -94,8 +94,9 @@
             "<h3>Need a hand?</h3>",
             "<p>Tell me what\u2019s going on \u2014 it goes straight to my queue.</p>",
             ((CFG.user || CFG.site) ? "<div id='ak-ctx'>" + (CFG.user ? "<b>" + esc(CFG.user) + "</b>" : "") + (CFG.site ? ((CFG.user ? " \u00b7 " : "") + esc(CFG.site)) : "") + "</div>" : ""),
+            "<input id='ak-sn' placeholder='Your name' style='margin-bottom:8px;'/>",
             "<textarea id='ak-q' rows='4' placeholder='What do you need help with?'></textarea>",
-            "<div id='ak-err'>Type your question first.</div>",
+            "<div id='ak-err'>Your name and question, please.</div>",
             "<button id='ak-go'>Send to queue \u2192</button>"
           ].join("")
         : [
@@ -134,14 +135,15 @@
   document.getElementById("ak-go").addEventListener("click", async function() {
     try {
       if (SUPPORT) {
+        var sn = (document.getElementById("ak-sn").value || "").trim();
         var sq = (document.getElementById("ak-q").value || "").trim();
         var serr = document.getElementById("ak-err");
-        if (!sq) { serr.style.display = "block"; return; }
+        if (!sq || !sn) { serr.style.display = "block"; return; }
         serr.style.display = "none";
         var sres = await fetch(SURL + "/rest/v1/conversations", {
           method: "POST",
           headers: Object.assign({}, H, { "Prefer": "return=representation" }),
-          body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: CFG.user || "Guest", visitor_email: null, site_origin: CFG.site || window.location.origin, type: "support", status: "open" })
+          body: JSON.stringify({ visitor_id: "v_" + Date.now(), visitor_name: sn || CFG.user || "Guest", visitor_email: null, site_origin: CFG.site || window.location.origin, type: "support", status: "open" })
         });
         var sdata = await sres.json();
         cid = sdata[0].id;
