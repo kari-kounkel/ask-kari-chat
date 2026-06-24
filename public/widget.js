@@ -1,4 +1,10 @@
 (function () {
+  // Idempotency guard: many pages load this script globally (index.html) AND
+  // again via per-component injection. Without this, two bubbles/panels stack
+  // in the same corner and fight, which reads as "the widget is broken."
+  if (window.__askKariLoaded) return;
+  window.__askKariLoaded = true;
+
   var SURL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
   var SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
   var H = { "Content-Type": "application/json", "apikey": SKEY, "Authorization": "Bearer " + SKEY };
