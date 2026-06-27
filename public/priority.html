@@ -36,9 +36,24 @@ textarea{resize:vertical;line-height:1.6;}
 .success h2{font-family:'Playfair Display',serif;font-size:24px;color:#2a1a10;}
 .success p{font-size:14px;color:#a07060;line-height:1.7;max-width:400px;}
 .err{font-size:12px;color:#e03820;margin-top:-8px;display:none;}
+.gate{display:none;flex-direction:column;align-items:center;gap:16px;padding:48px 32px;text-align:center;}
+.gate-icon{font-size:48px;}
+.gate h2{font-family:'Playfair Display',serif;font-size:22px;color:#2a1a10;}
+.gate p{font-size:13px;color:#a07060;line-height:1.7;max-width:380px;}
+.gate a{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#e03820,#f07830);border-radius:12px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif;}
 </style>
 </head>
 <body>
+
+<div class="card" id="gate-card" style="display:none;">
+  <div class="gate" style="display:flex;">
+    <div class="gate-icon">🔒</div>
+    <h2>This page requires payment.</h2>
+    <p>Priority Ask is a paid service — one thorough answer, one follow-up, delivered within 24–48 hours. Click below to get started.</p>
+    <a href="https://buy.stripe.com/bJebJ13x5epY9r5bqI18c05" target="_blank">⭐ Get Priority Access — $26 →</a>
+    <p style="font-size:11px;color:#c0a090;margin-top:4px;">Have a coupon code? You'll enter it at checkout.</p>
+  </div>
+</div>
 
 <div class="card" id="form-card">
   <div class="card-head">
@@ -102,6 +117,17 @@ textarea{resize:vertical;line-height:1.6;}
 var SURL = "https://rhbmuxvbmmlbkjegwtgr.supabase.co";
 var SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoYm11eHZibW1sYmtqZWd3dGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDY0NjYsImV4cCI6MjA5MDMyMjQ2Nn0.D1qyXKPcDypXFTLdxk2fARkNPQKTiwJeTTX--ifc8UM";
 var H = {"Content-Type":"application/json","apikey":SKEY,"Authorization":"Bearer "+SKEY};
+
+// Gate check — must have Stripe session_id in URL
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var hasSession = params.has("session_id") && params.get("session_id").startsWith("cs_");
+  if (!hasSession) {
+    document.getElementById("form-card").style.display = "none";
+    document.getElementById("success-card").style.display = "none";
+    document.getElementById("gate-card").style.display = "block";
+  }
+})();
 
 document.getElementById("file-input").addEventListener("change", function() {
   var f = this.files[0];
