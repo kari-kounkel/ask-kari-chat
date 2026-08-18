@@ -479,16 +479,21 @@ export default function AdminInbox({ agent, onLogout }) {
                 </div>
 
                 <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px", display: "flex", flexDirection: "column", gap: 12, background: SOFT }}>
-                  {messages.map(m => (
+                  {messages.map(m => {
+                    const isImg = /^https?:\/\/.*(\/support-files\/|\.(png|jpe?g|gif|webp))(\?|$)/i.test(m.body || "");
+                    return (
                     <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: m.sender === "agent" ? "flex-end" : "flex-start" }}>
-                      <div style={{ maxWidth: "80%", padding: "10px 14px", borderRadius: m.sender === "agent" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.sender === "agent" ? GRAD : "#fff", color: m.sender === "agent" ? "#fff" : "#2a1a10", fontSize: 14, lineHeight: 1.5, fontWeight: m.sender === "agent" ? 500 : 400, border: m.sender === "agent" ? "none" : "1.5px solid " + BORDER, wordBreak: "break-word" }}>
-                        {m.body}
+                      <div style={{ maxWidth: "80%", padding: isImg ? 6 : "10px 14px", borderRadius: m.sender === "agent" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.sender === "agent" ? GRAD : "#fff", color: m.sender === "agent" ? "#fff" : "#2a1a10", fontSize: 14, lineHeight: 1.5, fontWeight: m.sender === "agent" ? 500 : 400, border: m.sender === "agent" ? "none" : "1.5px solid " + BORDER, wordBreak: "break-word" }}>
+                        {isImg
+                          ? <a href={m.body} target="_blank" rel="noreferrer" style={{ display: "block" }}><img src={m.body} alt="attachment" style={{ display: "block", maxWidth: "100%", maxHeight: 320, borderRadius: 10, cursor: "zoom-in" }} /></a>
+                          : m.body}
                       </div>
                       <div style={{ fontSize: 11, color: "#b09080", marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
                         {m.sender === "agent" ? "You" : (active.visitor_name || "Visitor")} - {timeAgo(m.created_at)}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   <div ref={bottomRef} />
                 </div>
 
