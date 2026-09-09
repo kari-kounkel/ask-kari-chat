@@ -1,10 +1,13 @@
 {
   "routes": [
     { "src": "/askkari", "dest": "/askkari.html" },
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/terms", "dest": "/terms.html" },
     { "src": "/widget.js", "dest": "/widget.js" },
     { "src": "/(.*\\.js)", "dest": "/$1" },
     { "src": "/(.*\\.css)", "dest": "/$1" },
     { "src": "/(.*\\.png)", "dest": "/$1" },
+    { "src": "/(.*\\.html)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
