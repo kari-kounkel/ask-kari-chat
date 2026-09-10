@@ -118,6 +118,9 @@
             "<label id='ak-rem-row'><input type='checkbox' id='ak-rem' checked/> Remember my conversation on this device</label>",
             "<button id='ak-go'>Let\u2019s do this \u2192</button>"
           ].join("")),
+      // Reachable policy links from the widget itself \u2014 visitors shouldn't have to hunt
+      // for them, and reviewers check that they're linked from where data is collected.
+      "<div style='font-size:10.5px;color:#b09080;text-align:center;line-height:1.5;'>By continuing you agree to the <a href='https://chat.karikounkel.com/terms' target='_blank' style='color:#a07060'>Terms</a> and <a href='https://chat.karikounkel.com/privacy' target='_blank' style='color:#a07060'>Privacy Policy</a>.</div>",
     "</div>",
     "<div id='ak-msgs' style='display:none'></div>",
     "<div id='ak-foot' style='display:none'><button id='ak-clip' title='Attach a screenshot'>📎</button><input id='ak-file' type='file' accept='image/*' style='display:none'/><input id='ak-inp' placeholder='Type a message...'/><button id='ak-send'>Send</button></div>",
