@@ -16,6 +16,28 @@
   var cid = localStorage.getItem("ak_cid") || null;
   var poll = null; var lastCount = 0;
 
+  // ?c=<conversation id> resumes a thread on ANY device. The reply emails carry it, so a
+  // visitor who closed the tab — or moved to their phone — lands back in their own
+  // conversation instead of a blank form. Without this the only way back was browser
+  // local storage, which meant one device or nothing.
+  var resumeId = null;
+  try {
+    var qs = new URLSearchParams(window.location.search);
+    var q = (qs.get("c") || "").trim();
+    // Conversation ids are uuids; anything else is someone poking at the URL.
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q)) {
+      resumeId = q;
+      cid = q;
+      localStorage.setItem("ak_cid", q);
+      lastCount = 0;
+      // Drop it from the address bar so the link isn't left sitting in history or
+      // copy-pasted onward by accident.
+      qs.delete("c");
+      var rest = qs.toString();
+      window.history.replaceState({}, "", window.location.pathname + (rest ? "?" + rest : "") + window.location.hash);
+    }
+  } catch (e) { /* older browsers: fall through to localStorage */ }
+
   // Support mode: set window.AskKariConfig = { mode:"support", site:"FlowSuite Pro", user:"Jane Doe" }
   // before loading this script. Lite "get in touch" flow — no email gate.
   var CFG = window.AskKariConfig || {};
@@ -135,6 +157,9 @@
   document.getElementById("ak-x").addEventListener("click", function() { pan.classList.remove("open"); });
 
   if (cid) { showChat(); loadMsgs(); startPoll(); }
+  // Arriving from a "pick it back up" link means they came here to read the reply —
+  // open the panel rather than making them find the bubble.
+  if (resumeId) { pan.classList.add("open"); }
 
   document.getElementById("ak-go").addEventListener("click", async function() {
     try {
