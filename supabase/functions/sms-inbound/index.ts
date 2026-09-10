@@ -5,12 +5,17 @@
 // so she can answer from anywhere without opening the admin inbox.
 //
 // Routing: every alert text carries the conversation's 3-character short_code. A reply
-// that starts with that code goes to that thread ("7K2 on my way"). With no code we fall
-// back to the most recently updated open conversation — right when only one person is
-// talking to her, which is the common case, and why the code exists for when it isn't.
+// that starts with that code goes to that thread ("4BX on my way"). With no code we fall
+// back to the most recently updated open conversation.
 //
 // Deployed with verify_jwt = false: Twilio can't send a Supabase JWT. Authentication is
 // the X-Twilio-Signature HMAC plus a hard check that the sender is Kari's own number.
+//
+// SIGNATURE URL: Twilio signs the exact URL it requested. Behind Supabase's edge runtime
+// req.url does not always match that (scheme and host can be rewritten upstream), and a
+// mismatch fails every inbound message with a 403 — which Twilio reports as 11200 and is
+// otherwise invisible. So we try the canonical public URL built from SUPABASE_URL first,
+// then req.url, then an explicit TWILIO_WEBHOOK_URL override.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -21,16 +26,11 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const KARI_ALERT_NUMBER = Deno.env.get("KARI_ALERT_NUMBER");
-// Set this if the URL Twilio calls differs from what the runtime reports (proxies rewrite
-// it); the signature is computed over the exact URL Twilio used, so a mismatch fails auth.
 const TWILIO_WEBHOOK_URL = Deno.env.get("TWILIO_WEBHOOK_URL");
 
 const MEDIA_BUCKET = "support-files";
-
 const db = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-// TwiML — Twilio reads this as the response to the inbound message. An empty <Response/>
-// means "received, say nothing back."
 function twiml(message?: string): Response {
   const body = message
     ? `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${
@@ -40,46 +40,46 @@ function twiml(message?: string): Response {
   return new Response(body, { status: 200, headers: { "Content-Type": "text/xml" } });
 }
 
-// Twilio's signature: HMAC-SHA1 over the request URL with every POST param appended in
-// alphabetical order as key+value, base64-encoded.
-async function validSignature(url: string, params: Record<string, string>, signature: string | null): Promise<boolean> {
-  if (!signature || !TWILIO_AUTH_TOKEN) return false;
+async function signatureFor(url: string, params: Record<string, string>): Promise<string> {
   let payload = url;
-  for (const key of Object.keys(params).sort()) payload += key + params[key];
+  for (const k of Object.keys(params).sort()) payload += k + params[k];
   const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(TWILIO_AUTH_TOKEN),
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"],
+    "raw", new TextEncoder().encode(TWILIO_AUTH_TOKEN ?? ""),
+    { name: "HMAC", hash: "SHA-1" }, false, ["sign"],
   );
   const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
-  const expected = btoa(String.fromCharCode(...new Uint8Array(mac)));
-  // Constant-time-ish compare.
-  if (expected.length !== signature.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
-  return diff === 0;
+  return btoa(String.fromCharCode(...new Uint8Array(mac)));
 }
 
-// Phone numbers arrive in a few shapes; compare on digits alone.
+async function validSignature(candidates: string[], params: Record<string, string>, sig: string | null): Promise<boolean> {
+  if (!sig || !TWILIO_AUTH_TOKEN) return false;
+  for (const url of candidates) {
+    if (!url) continue;
+    if (await signatureFor(url, params) === sig) return true;
+  }
+  return false;
+}
+
 function sameNumber(a: string | undefined | null, b: string | undefined | null): boolean {
   const digits = (s: string | undefined | null) => String(s || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
   const x = digits(a), y = digits(b);
   return Boolean(x) && x === y;
 }
 
-// Pull "7K2 rest of the message" apart. The code is 3 chars from the same alphabet the
-// generator uses, optionally followed by a separator.
+// Twilio handles STOP/START/HELP itself on most configurations, but when a number is in a
+// Messaging Service without Advanced Opt-Out they arrive here instead. They are carrier
+// keywords, not chat messages — never post them into someone's conversation.
+const CARRIER_KEYWORDS = new Set([
+  "START", "YES", "UNSTOP", "STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT",
+  "OPTOUT", "REVOKE", "HELP", "INFO", "JOIN",
+]);
+
 function splitCode(body: string): { code: string | null; text: string } {
   const m = body.match(/^\s*([2-9A-HJ-NP-Z]{3})\s*[:,.\-—]?\s+([\s\S]+)$/i);
   if (m) return { code: m[1].toUpperCase(), text: m[2].trim() };
-  // A bare code with nothing after it isn't a message — treat the whole thing as text.
   return { code: null, text: body.trim() };
 }
 
-// MMS media lives on Twilio's CDN behind account auth and doesn't stay forever, so copy
-// it into the same bucket the widget uploads visitor screenshots to.
 async function storeMedia(mediaUrl: string, contentType: string, conversationId: string): Promise<string | null> {
   try {
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return null;
@@ -90,10 +90,7 @@ async function storeMedia(mediaUrl: string, contentType: string, conversationId:
     const bytes = new Uint8Array(await res.arrayBuffer());
     const ext = (contentType.split("/")[1] || "jpg").split(";")[0].replace(/[^a-z0-9]/gi, "") || "jpg";
     const path = `${conversationId}/kari-${Date.now()}.${ext}`;
-    const { error } = await db.storage.from(MEDIA_BUCKET).upload(path, bytes, {
-      contentType,
-      upsert: true,
-    });
+    const { error } = await db.storage.from(MEDIA_BUCKET).upload(path, bytes, { contentType, upsert: true });
     if (error) throw new Error(error.message);
     return `${SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${path}`;
   } catch (e) {
@@ -109,49 +106,51 @@ Deno.serve(async (req: Request) => {
   const params: Record<string, string> = {};
   for (const [k, v] of new URLSearchParams(raw)) params[k] = v;
 
-  const url = TWILIO_WEBHOOK_URL || req.url;
-  if (!(await validSignature(url, params, req.headers.get("x-twilio-signature")))) {
-    console.error(`${LOG} bad signature for ${url}`);
+  const canonical = `${SUPABASE_URL}/functions/v1/sms-inbound`;
+  const candidates = [canonical, req.url, TWILIO_WEBHOOK_URL ?? ""];
+  if (!(await validSignature(candidates, params, req.headers.get("x-twilio-signature")))) {
+    console.error(`${LOG} bad signature; tried: ${candidates.filter(Boolean).join(" | ")}`);
     return new Response("forbidden", { status: 403 });
   }
 
   const from = params.From || "";
   const body = (params.Body || "").trim();
 
-  // Only Kari's phone may write into conversations. Anyone else who texts the number gets
-  // a polite nudge and nothing is stored.
   if (!sameNumber(from, KARI_ALERT_NUMBER)) {
     console.error(`${LOG} rejected inbound from ${from}`);
     return twiml("This number only takes replies from Ask Kari. Reach Kari at chat.karikounkel.com.");
+  }
+
+  // Carrier keywords are consumed here, never posted to a conversation.
+  if (CARRIER_KEYWORDS.has(body.toUpperCase())) {
+    console.log(`${LOG} carrier keyword: ${body.toUpperCase()}`);
+    const kw = body.toUpperCase();
+    if (kw === "START" || kw === "YES" || kw === "UNSTOP" || kw === "JOIN") {
+      return twiml("Ask Kari: You're now subscribed to alerts when someone messages you through your website chat. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel.");
+    }
+    if (kw === "HELP" || kw === "INFO") {
+      return twiml("Ask Kari: For help email kari@karikounkel.com. Msg frequency varies. Msg & data rates may apply. Reply STOP to cancel.");
+    }
+    return twiml("You have successfully been unsubscribed. You will not receive any more messages from this number. Reply START to resubscribe.");
   }
 
   const { code, text } = splitCode(body);
 
   let conv: { id: string; short_code: string | null; visitor_name: string | null } | null = null;
   if (code) {
-    const { data } = await db
-      .from("conversations")
-      .select("id, short_code, visitor_name")
-      .eq("short_code", code)
-      .neq("status", "closed")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data } = await db.from("conversations").select("id, short_code, visitor_name")
+      .eq("short_code", code).neq("status", "closed")
+      .order("updated_at", { ascending: false }).limit(1).maybeSingle();
     conv = data ?? null;
     if (!conv) return twiml(`No open conversation with code ${code}. Text the code from the alert, then your reply.`);
   } else {
-    const { data } = await db
-      .from("conversations")
-      .select("id, short_code, visitor_name")
+    const { data } = await db.from("conversations").select("id, short_code, visitor_name")
       .neq("status", "closed")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("updated_at", { ascending: false }).limit(1).maybeSingle();
     conv = data ?? null;
     if (!conv) return twiml("No open conversations to reply to right now.");
   }
 
-  // Copy any attached photos across before posting, so they arrive in order.
   const bodies: string[] = [];
   const numMedia = parseInt(params.NumMedia || "0", 10) || 0;
   for (let i = 0; i < numMedia; i++) {
@@ -166,10 +165,7 @@ Deno.serve(async (req: Request) => {
 
   for (const b of bodies) {
     const { error } = await db.from("messages").insert({
-      conversation_id: conv.id,
-      sender: "agent",
-      sender_name: "Kari",
-      body: b,
+      conversation_id: conv.id, sender: "agent", sender_name: "Kari", body: b,
     });
     if (error) {
       console.error(`${LOG} insert failed:`, error.message);
@@ -177,8 +173,7 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  await db
-    .from("conversations")
+  await db.from("conversations")
     .update({ updated_at: new Date().toISOString(), last_sender: "agent" })
     .eq("id", conv.id);
 
